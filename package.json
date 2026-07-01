@@ -1,0 +1,22 @@
+{
+  "name": "projectmanagement",
+  "version": "1.0.0",
+  "description": "a project management applicaiton for beginers",
+  "keywords": [
+    "udemy",
+    "cource",
+    "backend",
+    "API",
+    "creation"
+  ],
+  "license": "ISC",
+  "author": "Lucky Chhabra",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "devDependencies": {
+    "prettier": "3.9.4"
+  }
+}
