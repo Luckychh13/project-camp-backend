@@ -16,7 +16,7 @@ import { createTaskValidator,
     updateSubTaskValidator
  } from "../validators/index.js"
 import { verifyJWT, validateProjectPermissions} from "../middlewares/auth.middleware.js"
-import {upload} from "../middlewares/multer.middleware.js"
+import {upload} from "../middlewares/multer.middlerware.js"
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js"
 
 const router=Router()

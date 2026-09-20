@@ -77,11 +77,7 @@ const registerUser=asyncHandler(async (req,res)=>{
 })
 
 const login=asyncHandler(async(req,res)=>{
-    const {email,password,username}=req.body
-
-    if(!email){
-        throw new ApiError(400,"Username or Email is required")
-    }
+    const {email,password}=req.body
 
     const user=await User.findOne({email})
 
@@ -92,7 +88,7 @@ const login=asyncHandler(async(req,res)=>{
     const isPasswordValid= await user.isPasswoerdCrrt(password)
 
     if(!isPasswordValid){
-        throw new ApiError(400,"password is invalid")
+        throw new ApiError(400,"Email or Password is Invalid")
     }
 
     const {accessToken,refreshToken}=await generateAccessAndRefreshTokens(user._id)
@@ -115,8 +111,6 @@ const login=asyncHandler(async(req,res)=>{
             200,
             {
                 user:loggedInUser,
-                accessToken,
-                refreshToken
             },
             "User logged in successfully"
           )
