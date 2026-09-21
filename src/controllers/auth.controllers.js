@@ -3,7 +3,6 @@ import { ApiResponse } from "../utils/api-response.js"
 import {ApiError} from "../utils/api-error.js"
 import { asyncHandler } from "../utils/async-handler.js"
 import {emailVerificationMailgenContent, forgotPasswordMailgenContent, sendEmail} from "../utils/mail.js"
-import { verifyJWT } from "../middlewares/auth.middleware.js"
 import jwt from "jsonwebtoken"
 import crypto from "crypto"
 
@@ -99,7 +98,7 @@ const login=asyncHandler(async(req,res)=>{
 
     const options={
         httpOnly:true,
-        secure:true,
+        secure: process.env.NODE_ENV === "production"
     }
 
     return res
@@ -131,7 +130,7 @@ const logoutUser=asyncHandler(async(req,res)=>{
     );
     const options={
         httpOnly:true,
-        secure:true
+        secure:true,
     }
     return res
       .status(200)
@@ -230,7 +229,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
     const incomingRefreshToken=req.cookies?.refreshToken || req.body?.refreshToken
 
     if(!incomingRefreshToken){
-        throw new ApiError(401,"Unauthorized Access")
+        throw new ApiError(401,"Invalid refresh token")
     }
 
     try {
@@ -239,22 +238,21 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
       const user=await User.findById(decodedToken?._id);
 
       if(!user){
-        throw new ApiError(401,"Inavlid refresh token")
+        throw new ApiError(401,"Invalid refresh token")
       }
 
       if(incomingRefreshToken !== user?.refreshToken){
-         throw new ApiError(401,"Refresh token is Expired")
+         throw new ApiError(401,"Invalid refresh token")
       }
 
       const options={
         httpOnly:true,
-        secure:true
+        secure: process.env.NODE_ENV === "production"
       }
 
       const {accessToken,refreshToken:newRefreshToken}=await generateAccessAndRefreshTokens(user._id)
 
-      user.refreshToken=newRefreshToken
-      await user.save()
+      
 
       return res
         .status(200)
@@ -263,7 +261,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
         .json(
             new ApiResponse(
                 200,
-                {accessToken,refreshToken:newRefreshToken},
+                {},
                 "Access token refreshed"
             )
         )
