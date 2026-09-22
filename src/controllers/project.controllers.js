@@ -87,12 +87,12 @@ const createProject=asyncHandler(async(req,res)=>{
       const project = await Project.create({
         name,
         description,
-        createdBy: new mongoose.Types.ObjectId(req.user._id),
+        createdBy: req.user._id,
       });
     
       await ProjectMember.create({
-        user: new mongoose.Types.ObjectId(req.user._id),
-        project: new mongoose.Types.ObjectId(project._id),
+        user: req.user._id,
+        project: project._id,
         role: UserRolesEnum.ADMIN,
       });
     
@@ -123,15 +123,29 @@ const updateProject = asyncHandler(async (req, res) => {
 });
 
 const deleteProject = asyncHandler(async (req, res) => {
-  const { projectId } = req.params;
+    const { projectId } = req.params;
 
-  const project = await Project.findByIdAndDelete(projectId);
-  if (!project) {
-    throw new ApiError(404, "Project not found");
-  }
-  return res
-    .status(200)
-    .json(new ApiResponse(200, project, "Project deleted successfully"));
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+        throw new ApiError(404, "Project not found");
+    }
+
+    await ProjectMember.deleteMany({
+        project: project._id
+    });
+
+    await Project.findByIdAndDelete(projectId);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                project,
+                "Project deleted successfully"
+            )
+        );
 });
 
 const addMembersToProject=asyncHandler(async(req,res)=>{
