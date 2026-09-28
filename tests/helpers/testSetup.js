@@ -1,5 +1,7 @@
 import request from "supertest"
 import app from "../../src/app.js"
+import fs from "fs/promises"
+import path from "path"
 
 import { User } from "../../src/models/user.models.js"
 import { Project } from "../../src/models/project.models.js"
@@ -170,12 +172,36 @@ export const cleanupTestData = async ({
     user,
     project
 } = {}) => {
+
     if (project?._id) {
         const tasks = await Task.find({
             project: project._id
-        }).select("_id")
+        }).select("_id attachments")
 
         const taskIds = tasks.map(task => task._id)
+
+        for (const task of tasks) {
+            for (const attachment of task.attachments || []) {
+                const fileName = attachment.url?.split("/images/")[1]
+
+                if (fileName) {
+                    const filePath = path.join(
+                        process.cwd(),
+                        "public",
+                        "images",
+                        fileName
+                    )
+
+                    try {
+                        await fs.unlink(filePath)
+                    } catch (error) {
+                        if (error.code !== "ENOENT") {
+                            throw error
+                        }
+                    }
+                }
+            }
+        }
 
         if (taskIds.length > 0) {
             await SubTask.deleteMany({
