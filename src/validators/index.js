@@ -1,9 +1,9 @@
-import {body,param} from "express-validator";
+import { body, param } from "express-validator";
 import { AvailableTaskStatus, AvailableUserRole } from "../utils/constants.js";
 
 
-const userRegisterValidator=()=>{
-    return[
+const userRegisterValidator = () => {
+    return [
         body("email")
             .trim()
             .notEmpty()
@@ -13,10 +13,10 @@ const userRegisterValidator=()=>{
         body("username")
             .trim()
             .notEmpty()
-            .withMessage("Username is required")    
+            .withMessage("Username is required")
             .isLowercase()
             .withMessage("Username must be in LowerCase")
-            .isLength({min:3})
+            .isLength({ min: 3 })
             .withMessage("Username must be at least 3 characters long"),
         body("password")
             .trim()
@@ -25,11 +25,11 @@ const userRegisterValidator=()=>{
         body("fullName")
             .optional()
             .trim(),
-    ]   
+    ]
 }
 
-const userLoginValidator=()=>{
-    return[
+const userLoginValidator = () => {
+    return [
         body("email")
             .trim()
             .notEmpty()
@@ -42,8 +42,8 @@ const userLoginValidator=()=>{
     ]
 }
 
-const userChangeCurrentPasswordValidator=()=>{
-    return[
+const userChangeCurrentPasswordValidator = () => {
+    return [
         body("oldPassword")
             .notEmpty()
             .withMessage("Old password is required"),
@@ -54,121 +54,161 @@ const userChangeCurrentPasswordValidator=()=>{
     ]
 }
 
-const userForgotPasswordValidator=()=>{
-    return[
+const userForgotPasswordValidator = () => {
+    return [
         body("email")
-        .notEmpty()
-        .withMessage("Email is required")
-        .isEmail()
-        .withMessage("Email is invalid")
+            .notEmpty()
+            .withMessage("Email is required")
+            .isEmail()
+            .withMessage("Email is invalid")
     ]
 }
 
-const userResetForgotPasswordValidator=()=>{
-    return[
+const userResetForgotPasswordValidator = () => {
+    return [
         body("newPassword")
-        .notEmpty()
-        .withMessage("Password is required")
+            .notEmpty()
+            .withMessage("Password is required")
     ]
 }
 
-const createProjectValidator = ()=>{
+const createProjectValidator = () => {
     return [
         body("name")
-         .notEmpty()
-         .withMessage("Name is required"),
+            .notEmpty()
+            .withMessage("Name is required"),
         body("description")
-         .optional()
+            .optional()
     ]
 }
 
-const addMembertoProjectValidator = ()=>{
+const addMembertoProjectValidator = () => {
     return [
         body("email")
-         .trim()
-         .notEmpty()
-         .withMessage("Email is required")
-         .isEmail()
-         .withMessage("Email is invalid"),
+            .trim()
+            .notEmpty()
+            .withMessage("Email is required")
+            .isEmail()
+            .withMessage("Email is invalid"),
         body("role")
-         .notEmpty()
-         .withMessage("Role is required")
-         .isIn(AvailableUserRole)
-         .withMessage("Role is invalid")
+            .notEmpty()
+            .withMessage("Role is required")
+            .isIn(AvailableUserRole)
+            .withMessage("Role is invalid")
     ]
 }
 
-const createTaskValidator = ()=>{
+const createTaskValidator = () => {
     return [
         body("title")
-         .notEmpty()
-         .withMessage("Title is required"),
+            .notEmpty()
+            .withMessage("Title is required"),
         body("description")
-         .optional(),
+            .optional(),
         body("assignedTo")
-         .optional()
-         .isMongoId()
-         .withMessage("Invalid assigned id"),
+            .optional()
+            .isMongoId()
+            .withMessage("Invalid assigned id"),
         body("status")
-         .optional()
-         .isIn(AvailableTaskStatus)
-         .withMessage("Task status is invalid")
-         
-         
+            .optional()
+            .isIn(AvailableTaskStatus)
+            .withMessage("Task status is invalid")
+
+
     ]
 }
 
-const updateTaskValidator = ()=>{
+const updateTaskValidator = () => {
     return [
         param("taskId")
-         .isMongoId()
-         .withMessage("Invalid task id"),
+            .isMongoId()
+            .withMessage("Invalid task id"),
         body("title")
-         .notEmpty()
-         .withMessage("Title is required"),
+            .notEmpty()
+            .withMessage("Title is required"),
         body("description")
-         .optional(),
+            .optional(),
         body("assignedTo")
-         .optional()
-         .isMongoId()
-         .withMessage("Invalid assigned id"),
+            .optional()
+            .isMongoId()
+            .withMessage("Invalid assigned id"),
         body("status")
-         .optional()
-         .isIn(AvailableTaskStatus)
-         .withMessage("Task status is invalid")
+            .optional()
+            .isIn(AvailableTaskStatus)
+            .withMessage("Task status is invalid")
     ]
 }
 
-const createSubTaskValidator = ()=>{
+const createSubTaskValidator = () => {
     return [
         param("projectId")
-         .isMongoId()
-         .withMessage("Invalid project id"),
+            .isMongoId()
+            .withMessage("Invalid project id"),
         param("taskId")
-         .isMongoId()
-         .withMessage("Invalid task id"),
+            .isMongoId()
+            .withMessage("Invalid task id"),
         body("title")
-         .notEmpty()
-         .withMessage("Title is required"),
+            .notEmpty()
+            .withMessage("Title is required"),
     ]
 }
 
-const updateSubTaskValidator = ()=>{
+const updateSubTaskValidator = () => {
     return [
         param("projectId")
-         .isMongoId()
-         .withMessage("Invalid project id"),
+            .isMongoId()
+            .withMessage("Invalid project id"),
         param("subTaskId")
-         .isMongoId()
-         .withMessage("Invalid subtask id"),
+            .isMongoId()
+            .withMessage("Invalid subtask id"),
         body("title")
-         .optional()
-         .notEmpty()
-         .withMessage("Title cannot be empty"),
+            .optional()
+            .notEmpty()
+            .withMessage("Title cannot be empty"),
         body("isCompleted")
-         .optional()
-         .isBoolean()
-         .withMessage("isCompleted must be a boolean"),
+            .optional()
+            .isBoolean()
+            .withMessage("isCompleted must be a boolean"),
+    ]
+}
+
+const createNoteValidator = () => {
+    return [
+        param("projectId")
+            .isMongoId()
+            .withMessage("Invalid project id"),
+
+        body("title")
+            .trim()
+            .notEmpty()
+            .withMessage("Title is required"),
+
+        body("content")
+            .trim()
+            .notEmpty()
+            .withMessage("Content is required")
+    ]
+}
+
+const updateNoteValidator = () => {
+    return [
+        param("projectId")
+            .isMongoId()
+            .withMessage("Invalid project id"),
+
+        param("noteId")
+            .isMongoId()
+            .withMessage("Invalid note id"),
+
+        body("title")
+            .trim()
+            .notEmpty()
+            .withMessage("Title is required"),
+
+        body("content")
+            .trim()
+            .notEmpty()
+            .withMessage("Content is required")
     ]
 }
 
@@ -183,5 +223,7 @@ export {
     createTaskValidator,
     updateTaskValidator,
     createSubTaskValidator,
-    updateSubTaskValidator
+    updateSubTaskValidator,
+    createNoteValidator,
+    updateNoteValidator
 }
