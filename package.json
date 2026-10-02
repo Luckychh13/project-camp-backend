@@ -16,13 +16,15 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
+    "swagger-autogen": "node swagger.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "devDependencies": {
     "jest": "^30.5.2",
     "nodemon": "^3.1.14",
     "prettier": "3.9.4",
-    "supertest": "^7.2.2"
+    "supertest": "^7.2.2",
+    "swagger-autogen": "^2.23.7"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -35,6 +37,8 @@
     "mailgen": "^2.0.34",
     "mongoose": "^9.7.3",
     "multer": "^2.2.0",
-    "nodemailer": "^9.0.3"
+    "nodemailer": "^9.0.3",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   }
 }

@@ -1,6 +1,8 @@
 import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
+import swaggerUi from "swagger-ui-express"
+import fs from "fs"
 
 const app = express()
 //basic configutrations
@@ -24,11 +26,16 @@ import projectRouter from "./routes/project.routes.js"
 import taskRouter from "./routes/task.routes.js"
 import notesRouter from "./routes/notes.routes.js"
 
+const swaggerDoc = JSON.parse(
+    fs.readFileSync("./swagger-output.json","utf-8")
+)
+
 app.use("/api/v1/healthcheck", healthCheckRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/projects", projectRouter)
 app.use("/api/v1/tasks", taskRouter)
 app.use("/api/v1/notes", notesRouter)
+app.use("/api-docs", swaggerUi.serve,swaggerUi.setup(swaggerDoc))
 app.get("/", (req, res) => {
     res.send("hello world!");
 });

@@ -6,6 +6,20 @@ import { ApiError } from "../utils/api-error.js"
 import { asyncHandler } from "../utils/async-handler.js"
 
 const getNotes = asyncHandler(async (req, res) => {
+    /* 
+        #swagger.tags = ['Notes']
+        #swagger.summary = 'Get project notes'
+        #swagger.security = [{ "bearerAuth": [] }]
+         #swagger.responses[200] = {
+            description: "Notes fetched successfully",
+            content: {
+                schema: {
+                    $ref: "#/components/schemas/NotesResponse"
+                }
+            }
+        }
+    */
+
     const { projectId } = req.params
 
     const project = await Project.findById(projectId)
@@ -24,6 +38,31 @@ const getNotes = asyncHandler(async (req, res) => {
 })
 
 const createNote = asyncHandler(async (req, res) => {
+
+    /* 
+           #swagger.tags = ['Notes']
+           #swagger.summary = 'Create a project note'
+           #swagger.security = [{ "bearerAuth": [] }]
+    
+           #swagger.requestBody = {
+               required: true,
+               content: {
+                   "application/json": {
+                       schema: {
+                           $ref: "#/components/schemas/CreateNoteRequest"
+                       }
+                   }
+               }
+           }
+            #swagger.responses[201] = {
+            description: "Note created successfully",
+                schema: {
+                    $ref: "#/components/schemas/CreateNoteResponse"
+                }
+                
+            }
+        }    
+    */
 
     const { projectId } = req.params
     const { title, content } = req.body
@@ -45,6 +84,20 @@ const createNote = asyncHandler(async (req, res) => {
 })
 
 const getNoteById = asyncHandler(async (req, res) => {
+    /*
+       #swagger.tags = ['Notes']
+       #swagger.summary = 'Get note by ID'
+       #swagger.security = [{ "bearerAuth": [] }]
+
+       #swagger.responses[200] = {
+           description: "Note fetched successfully",
+           content: {
+                schema: {
+                    $ref: "#/components/schemas/NoteResponse"
+                }
+            }
+       }
+   */
     const { projectId, noteId } = req.params
 
     const note = await Note.findOne({
@@ -61,6 +114,31 @@ const getNoteById = asyncHandler(async (req, res) => {
 })
 
 const updateNote = asyncHandler(async (req, res) => {
+    /*
+       #swagger.tags = ['Notes']
+       #swagger.summary = 'Update a Note'
+       #swagger.security = [{ "bearerAuth": [] }]
+
+       #swagger.requestBody = {
+            required: true,
+               content: {
+                   "application/json": {
+                       schema: {
+                         $ref: "#/components/schemas/UpdateNoteRequest"
+                    }
+                }
+            }
+        }
+
+       #swagger.responses[200] = {
+           description: "Note Updated successfully",
+           content: {
+                schema: {
+                    $ref: "#/components/schemas/UpdateNoteResponse"
+                }
+           }
+       }
+   */
     const { projectId, noteId } = req.params
     const { title, content } = req.body
 
@@ -88,6 +166,18 @@ const updateNote = asyncHandler(async (req, res) => {
 })
 
 const deleteNote = asyncHandler(async (req, res) => {
+    /*
+       #swagger.tags = ['Notes']
+       #swagger.summary = 'Delete a Note'
+       #swagger.security = [{ "bearerAuth": [] }]
+
+       #swagger.responses[200] = {
+          description: 'Note deleted successfully',
+            schema: { 
+               $ref:'#/components/schemas/DeleteNoteResponse'
+            }
+        }
+    */
     const { projectId, noteId } = req.params
 
     const note = await Note.findOneAndDelete({
