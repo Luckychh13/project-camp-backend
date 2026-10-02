@@ -1,0 +1,1364 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Project Management API",
+    "version": "1.0.0",
+    "description": "API documentation for the Project Management application"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/healthcheck/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register a new user",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login a user",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "User Logged in Successfully",
+            "headers": {
+              "Set-Cookie": {
+                "description": "HTTP-only access and refresh token cookies",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/verify-email/{verificationToken}": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Verify user's email",
+        "description": "",
+        "parameters": [
+          {
+            "name": "verificationToken",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh-token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh access token",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Request password reset",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/reset-password/{resetToken}": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Reset password using token",
+        "description": "",
+        "parameters": [
+          {
+            "name": "resetToken",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "newPassword": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout a user",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/current-user": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get current user",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Change current password",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "oldPassword": {
+                    "example": "any"
+                  },
+                  "newPassword": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/resend-email-verification": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Resend email verification",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/projects/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "example": "any"
+                  },
+                  "description": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/members": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/members/{userId}": {
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{projectId}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "example": "any"
+                  },
+                  "description": {
+                    "example": "any"
+                  },
+                  "assignedTo": {
+                    "example": "any"
+                  },
+                  "status": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{projectId}/t/{taskId}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "example": "any"
+                  },
+                  "description": {
+                    "example": "any"
+                  },
+                  "assignedTo": {
+                    "example": "any"
+                  },
+                  "status": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{projectId}/t/{taskId}/subtasks": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tasks/{projectId}/st/{subTaskId}": {
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subTaskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "example": "any"
+                  },
+                  "isCompleted": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subTaskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/notes/{projectId}": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Get project notes",
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes fetched successfully",
+            "content": {
+              "schema": {
+                "$ref": "#/components/schemas/NotesResponse"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create a project note",
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Note created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNoteResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateNoteResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notes/{projectId}/n/{noteId}": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Get note by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "noteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note fetched successfully",
+            "content": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteResponse"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Update a Note",
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "noteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note Updated successfully",
+            "content": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNoteResponse"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNoteRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete a Note",
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "noteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteNoteResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteNoteResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "CreateNoteRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Meeting Notes"
+          },
+          "content": {
+            "type": "string",
+            "example": "Discuss deployment"
+          }
+        },
+        "required": [
+          "title",
+          "content"
+        ],
+        "xml": {
+          "name": "CreateNoteRequest"
+        }
+      },
+      "UpdateNoteRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Updated Meeting Notes"
+          },
+          "content": {
+            "type": "string",
+            "example": "Deployment discussion updated"
+          }
+        },
+        "xml": {
+          "name": "UpdateNoteRequest"
+        }
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012345"
+          },
+          "title": {
+            "type": "string",
+            "example": "Meeting Notes"
+          },
+          "content": {
+            "type": "string",
+            "example": "Discuss deployment"
+          },
+          "project": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012346"
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012347"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-02T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-02T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "_id",
+          "title",
+          "content",
+          "project",
+          "createdBy"
+        ],
+        "xml": {
+          "name": "Note"
+        }
+      },
+      "NoteResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "xml": {
+              "name": "note"
+            },
+            "$ref": "#/components/schemas/Note"
+          },
+          "message": {
+            "type": "string",
+            "example": "Note fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "NoteResponse"
+        }
+      },
+      "NotesResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "example": "array"
+              },
+              "items": {
+                "xml": {
+                  "name": "note"
+                },
+                "$ref": "#/components/schemas/Note"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Notes fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "NotesResponse"
+        }
+      },
+      "CreateNoteResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 201
+          },
+          "data": {
+            "xml": {
+              "name": "note"
+            },
+            "$ref": "#/components/schemas/Note"
+          },
+          "message": {
+            "type": "string",
+            "example": "Note created successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "CreateNoteResponse"
+        }
+      },
+      "UpdateNoteResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "xml": {
+              "name": "note"
+            },
+            "$ref": "#/components/schemas/Note"
+          },
+          "message": {
+            "type": "string",
+            "example": "Note updated successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "UpdateNoteResponse"
+        }
+      },
+      "DeleteNoteResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {},
+          "message": {
+            "type": "string",
+            "example": "Note deleted successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "DeleteNoteResponse"
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "jhon@example.com"
+          },
+          "username": {
+            "type": "string",
+            "example": "jhon"
+          },
+          "password": {
+            "type": "string",
+            "example": "anything@35361_+"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Jhon Show"
+          }
+        },
+        "required": [
+          "email",
+          "username",
+          "password"
+        ],
+        "xml": {
+          "name": "RegisterRequest"
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "Jhon@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "anything@35361_+"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "xml": {
+          "name": "LoginRequest"
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012345"
+          },
+          "username": {
+            "type": "string",
+            "example": "lucky123"
+          },
+          "email": {
+            "type": "string",
+            "example": "lucky@example.com"
+          },
+          "avatar": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "example": "https://placehold.co/200x200"
+              },
+              "localPath": {
+                "type": "string",
+                "example": ""
+              }
+            }
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Lucky Chhabra"
+          },
+          "isEmailVerified": {
+            "type": "boolean",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-02T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-02T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "_id",
+          "username",
+          "email"
+        ],
+        "xml": {
+          "name": "User"
+        }
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 201
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "xml": {
+                  "name": "user"
+                },
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "User registered successfully and verification email has been sent to ur email"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "RegisterResponse"
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "xml": {
+                  "name": "user"
+                },
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "User logged in successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "LoginResponse"
+        }
+      }
+    }
+  }
+}

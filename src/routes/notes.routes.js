@@ -31,6 +31,12 @@ router.use(verifyJWT)
 
 router
     .route("/:projectId")
+    /**
+     * @swagger
+     * /api/v1/notes/{projectId}:
+     *   get:
+     *     summary: Get project notes
+     */
     .get(
         validateProjectPermissions(AvailableUserRole),
         getNotes
@@ -57,6 +63,6 @@ router
     .delete(
         validateProjectPermissions([UserRolesEnum.ADMIN]),
         deleteNote
-    )   
-    
+    )
+
 export default router    
