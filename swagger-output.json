@@ -131,7 +131,19 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/verifiyEmailResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/verifiyEmailResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -145,7 +157,27 @@
         "description": "",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Access token refreshed",
+            "headers": {
+              "Set-Cookie": {
+                "description": "HTTP-only access and refresh token cookies",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshTokenResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshTokenResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -159,19 +191,27 @@
         "description": "",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Password reset email sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgotPasswordResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgotPasswordResponse"
+                }
+              }
+            }
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "example": "any"
-                  }
-                }
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
               }
             }
           }
@@ -197,19 +237,27 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Password reset successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordResponse"
+                }
+              }
+            }
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "newPassword": {
-                    "example": "any"
-                  }
-                }
+                "$ref": "#/components/schemas/ResetPasswordRequest"
               }
             }
           }
@@ -223,9 +271,38 @@
         ],
         "summary": "Logout a user",
         "description": "",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "User logged out successfully",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Clears the accessToken and refreshToken cookies",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -237,11 +314,37 @@
         ],
         "summary": "Get current user",
         "description": "",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Current user fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/auth/change-password": {
@@ -251,24 +354,43 @@
         ],
         "summary": "Change current password",
         "description": "",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Password changed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangePasswordResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangePasswordResponse"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "oldPassword": {
-                    "example": "any"
-                  },
-                  "newPassword": {
-                    "example": "any"
-                  }
-                }
+                "$ref": "#/components/schemas/ChangePasswordRequest"
               }
             }
           }
@@ -282,11 +404,37 @@
         ],
         "summary": "Resend email verification",
         "description": "",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Verification email sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendEmailVerificationResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendEmailVerificationResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/projects/": {
@@ -299,34 +447,51 @@
         }
       },
       "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Create a new project",
         "description": "",
         "responses": {
-          "default": {
-            "description": ""
+          "201": {
+            "description": "Project created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateProjectResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateProjectResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
           }
         }
       }
     },
     "/api/v1/projects/{projectId}": {
       "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
+        "tags": [
+          "Projects"
         ],
-        "responses": {
-          "default": {
-            "description": ""
-          }
-        }
-      },
-      "put": {
+        "summary": "Get project by ID",
         "description": "",
         "parameters": [
           {
@@ -340,28 +505,81 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Project fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponse"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Update project",
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateProjectResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateProjectResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "example": "any"
-                  },
-                  "description": {
-                    "example": "any"
-                  }
-                }
+                "$ref": "#/components/schemas/UpdateProjectRequest"
               }
             }
           }
         }
       },
       "delete": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Delete project",
         "description": "",
         "parameters": [
           {
@@ -375,13 +593,34 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Project deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteProjectResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteProjectResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/projects/{projectId}/members": {
       "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Get project members",
         "description": "",
         "parameters": [
           {
@@ -394,12 +633,33 @@
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Project members fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMembersResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMembersResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Add member to project",
         "description": "",
         "parameters": [
           {
@@ -412,14 +672,45 @@
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "201": {
+            "description": "Project member added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddProjectMemberResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddProjectMemberResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddProjectMemberRequest"
+              }
+            }
           }
         }
       }
     },
     "/api/v1/projects/{projectId}/members/{userId}": {
       "put": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Update project member role",
         "description": "",
         "parameters": [
           {
@@ -440,12 +731,43 @@
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Project member role updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateProjectMemberResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateProjectMemberResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectMemberRequest"
+              }
+            }
           }
         }
       },
       "delete": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Remove member from project",
         "description": "",
         "parameters": [
           {
@@ -466,10 +788,27 @@
           }
         ],
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Project member removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteProjectMemberResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteProjectMemberResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/tasks/{projectId}": {
@@ -1243,6 +1582,56 @@
           "name": "LoginRequest"
         }
       },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "Jhon@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "xml": {
+          "name": "ForgotPasswordRequest"
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "type": "string",
+            "example": "NewPassword@123"
+          }
+        },
+        "required": [
+          "newPassword"
+        ],
+        "xml": {
+          "name": "ResetPasswordRequest"
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "properties": {
+          "oldPassword": {
+            "type": "string",
+            "example": "OldPassword@123"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NewPassword@123"
+          }
+        },
+        "required": [
+          "oldPassword",
+          "newPassword"
+        ],
+        "xml": {
+          "name": "ChangePasswordRequest"
+        }
+      },
       "User": {
         "type": "object",
         "properties": {
@@ -1357,6 +1746,713 @@
         },
         "xml": {
           "name": "LoginResponse"
+        }
+      },
+      "verifyEmailResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "isEmailVerified": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Email is Verified"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "verifyEmailResponse"
+        }
+      },
+      "RefreshTokenResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "Access token refreshed"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "RefreshTokenResponse"
+        }
+      },
+      "ForgotPasswordResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "Password resend mail has been send to ur mail "
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "ForgotPasswordResponse"
+        }
+      },
+      "ResetPasswordResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "Password rest successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "ResetPasswordResponse"
+        }
+      },
+      "LogoutResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "USer logged out"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "LogoutResponse"
+        }
+      },
+      "CurrentUserResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "xml": {
+              "name": "user"
+            },
+            "$ref": "#/components/schemas/User"
+          },
+          "message": {
+            "type": "string",
+            "example": "Current user fetched Successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "CurrentUserResponse"
+        }
+      },
+      "ChangePasswordResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "Password changed successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "ChangePasswordResponse"
+        }
+      },
+      "ResendEmailVerificationResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "Mail has been sent to your email Id"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "ResendEmailVerificationResponse"
+        }
+      },
+      "CreateProjectRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "My Project"
+          },
+          "description": {
+            "type": "string",
+            "example": "A project management application"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "xml": {
+          "name": "CreateProjectRequest"
+        }
+      },
+      "UpdateProjectRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Updated Project"
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated project description"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "xml": {
+          "name": "UpdateProjectRequest"
+        }
+      },
+      "AddProjectMemberRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "member@example.com"
+          },
+          "role": {
+            "type": "string",
+            "example": "member"
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "xml": {
+          "name": "AddProjectMemberRequest"
+        }
+      },
+      "UpdateProjectMemberRequest": {
+        "type": "object",
+        "properties": {
+          "newRole": {
+            "type": "string",
+            "example": "project_admin"
+          }
+        },
+        "required": [
+          "newRole"
+        ],
+        "xml": {
+          "name": "UpdateProjectMemberRequest"
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012345"
+          },
+          "name": {
+            "type": "string",
+            "example": "My Project"
+          },
+          "description": {
+            "type": "string",
+            "example": "A project management application"
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012346"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-02T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-02T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "_id",
+          "name",
+          "createdBy"
+        ],
+        "xml": {
+          "name": "Project"
+        }
+      },
+      "ProjectListItem": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "object",
+            "properties": {
+              "_id": {
+                "type": "string",
+                "example": "65f1a2b3c4d5e6f789012345"
+              },
+              "name": {
+                "type": "string",
+                "example": "My Project"
+              },
+              "description": {
+                "type": "string",
+                "example": "A project management application"
+              },
+              "members": {
+                "type": "number",
+                "example": 3
+              },
+              "createdBy": {
+                "type": "string",
+                "example": "65f1a2b3c4d5e6f789012346"
+              },
+              "createdAt": {
+                "type": "string",
+                "example": "2026-10-02T10:00:00.000Z"
+              }
+            },
+            "required": [
+              "_id",
+              "name",
+              "createdBy"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "example": "MEMBER"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "xml": {
+          "name": "ProjectListItem"
+        }
+      },
+      "ProjectResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "xml": {
+              "name": "project"
+            },
+            "$ref": "#/components/schemas/Project"
+          },
+          "message": {
+            "type": "string",
+            "example": "Project fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "ProjectResponse"
+        }
+      },
+      "ProjectsResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "example": "array"
+              },
+              "items": {
+                "xml": {
+                  "name": "projectlistitem"
+                },
+                "$ref": "#/components/schemas/ProjectListItem"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Projects fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "ProjectsResponse"
+        }
+      },
+      "CreateProjectResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 201
+          },
+          "data": {
+            "xml": {
+              "name": "project"
+            },
+            "$ref": "#/components/schemas/Project"
+          },
+          "message": {
+            "type": "string",
+            "example": "Project created successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "CreateProjectResponse"
+        }
+      },
+      "UpdateProjectResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "xml": {
+              "name": "project"
+            },
+            "$ref": "#/components/schemas/Project"
+          },
+          "message": {
+            "type": "string",
+            "example": "Project updated successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "UpdateProjectResponse"
+        }
+      },
+      "DeleteProjectResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "Project deleted successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "DeleteProjectResponse"
+        }
+      },
+      "ProjectMemberUser": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "6abf6cb126cb15518e7b7691"
+          },
+          "avatar": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "example": "https://placehold.co/200x200"
+              },
+              "localPath": {
+                "type": "string",
+                "example": ""
+              },
+              "_id": {
+                "type": "string",
+                "example": "6abf6cb126cb15518e7b7690"
+              }
+            },
+            "required": [
+              "_id"
+            ]
+          },
+          "username": {
+            "type": "string",
+            "example": "jhon"
+          }
+        },
+        "required": [
+          "_id",
+          "username"
+        ],
+        "xml": {
+          "name": "ProjectMemberUser"
+        }
+      },
+      "ProjectMember": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "xml": {
+              "name": "projectmemberuser"
+            },
+            "$ref": "#/components/schemas/ProjectMemberUser"
+          },
+          "project": {
+            "type": "string",
+            "example": "6ac0b81fdfdb027374b0ec46"
+          },
+          "role": {
+            "type": "string",
+            "example": "member"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-03T08:09:03.962Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-03T08:09:03.962Z"
+          }
+        },
+        "required": [
+          "user",
+          "project",
+          "role",
+          "createdAt",
+          "updatedAt"
+        ],
+        "xml": {
+          "name": "ProjectMember"
+        }
+      },
+      "AddProjectMemberResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 201
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "Added project member role"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "AddProjectMemberResponse"
+        }
+      },
+      "ProjectMemberResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "xml": {
+              "name": "projectmember"
+            },
+            "$ref": "#/components/schemas/ProjectMember"
+          },
+          "message": {
+            "type": "string",
+            "example": "Project member fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "ProjectMemberResponse"
+        }
+      },
+      "ProjectMembersResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "example": "array"
+              },
+              "items": {
+                "xml": {
+                  "name": "projectmember"
+                },
+                "$ref": "#/components/schemas/ProjectMember"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Project members fetched"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "ProjectMembersResponse"
+        }
+      },
+      "UpdateProjectMemberResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "xml": {
+              "name": "projectmember"
+            },
+            "$ref": "#/components/schemas/ProjectMember"
+          },
+          "message": {
+            "type": "string",
+            "example": "Project member role updated successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "UpdateProjectMemberResponse"
+        }
+      },
+      "DeleteProjectMemberResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "Project member deleted successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "DeleteProjectMemberResponse"
         }
       }
     }

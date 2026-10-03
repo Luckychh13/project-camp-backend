@@ -9,6 +9,16 @@ export const authSchemas = {
         $email: "Jhon@example.com",
         $password: "anything@35361_+"
     },
+    ForgotPasswordRequest: {
+        $email: "Jhon@example.com"
+    },
+    ResetPasswordRequest: {
+        $newPassword: "NewPassword@123"
+    },
+    ChangePasswordRequest: {
+        $oldPassword: "OldPassword@123",
+        $newPassword: "NewPassword@123"
+    },
     User: {
         $_id: "65f1a2b3c4d5e6f789012345",
         $username: "lucky123",
@@ -40,6 +50,58 @@ export const authSchemas = {
             }
         },
         message: "User logged in successfully",
+        success: true
+    },
+    verifyEmailResponse: {
+        statusCode: 200,
+        data: {
+            isEmailVerified: true
+        },
+        message: "Email is Verified",
+        success: true
+    },
+    RefreshTokenResponse: {
+        statusCode: 200,
+        data: {},
+        message: "Access token refreshed",
+        success: true
+    },
+    ForgotPasswordResponse: {
+        statusCode: 200,
+        data: {},
+        message: "Password resend mail has been send to ur mail ",
+        success: true
+    },
+    ResetPasswordResponse: {
+        statusCode: 200,
+        data: {},
+        message: "Password rest successfully",
+        success: true
+    },
+    LogoutResponse: {
+        statusCode: 200,
+        data: {},
+        message: "USer logged out",
+        success: true
+    },
+    CurrentUserResponse: {
+        statusCode: 200,
+        data: {
+            $ref: "#/components/schemas/User"
+        },
+        message: "Current user fetched Successfully",
+        success: true
+    },
+    ChangePasswordResponse: {
+        statusCode: 200,
+        data: {},
+        message: "Password changed successfully",
+        success: true
+    },
+    ResendEmailVerificationResponse: {
+        statusCode: 200,
+        data: {},
+        message: "Mail has been sent to your email Id",
         success: true
     }
 }
