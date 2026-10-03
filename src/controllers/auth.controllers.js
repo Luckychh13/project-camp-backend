@@ -73,7 +73,7 @@ const registerUser = asyncHandler(async (req, res) => {
         subject: "Please verify ur email",
         mailgenContent: emailVerificationMailgenContent(
             user.username,
-            `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`
+            `${req.protocol}:${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`
         ),
     })
 
@@ -171,9 +171,25 @@ const login = asyncHandler(async (req, res) => {
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
-    /* 
-     #swagger.tags = ["Auth"]
-     #swagger.summary = "Logout a user"
+    /*
+        #swagger.tags = ["Auth"]
+        #swagger.summary = "Logout a user"
+    
+        #swagger.responses[200] = {
+            description: "User logged out successfully",
+            schema: {
+                $ref: "#/components/schemas/LogoutResponse"
+            },
+            headers: {
+                "Set-Cookie": {
+                    description: "Clears the accessToken and refreshToken cookies",
+                    schema: {
+                        type: "string"
+                    }
+                }
+            }
+        }
+    
     */
     await User.findByIdAndUpdate(
         req.user._id,
@@ -200,9 +216,18 @@ const logoutUser = asyncHandler(async (req, res) => {
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-    /* 
-     #swagger.tags = ["Auth"]
-     #swagger.summary = "Get current user"
+    /*
+        #swagger.tags = ["Auth"]
+        #swagger.summary = "Get current user"
+    
+        #swagger.security = [{ "bearerAuth": [] }]
+    
+        #swagger.responses[200] = {
+            description: "Current user fetched successfully",
+            schema: {
+                $ref: "#/components/schemas/CurrentUserResponse"
+            }
+        }
     */
     return res
         .status(200)
@@ -210,9 +235,16 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 })
 
 const verifyEmail = asyncHandler(async (req, res) => {
-    /* 
-     #swagger.tags = ["Auth"]
-     #swagger.summary = "Verify user's email"
+    /*
+        #swagger.tags = ["Auth"]
+        #swagger.summary = "Verify user's email"
+    
+        #swagger.responses[200] = {
+            description: "Email verified successfully",
+            schema: {
+                $ref: "#/components/schemas/verifiyEmailResponse"
+            }
+        }
     */
     const { verificationToken } = req.params
 
@@ -253,10 +285,18 @@ const verifyEmail = asyncHandler(async (req, res) => {
 })
 
 const resendEmailVerification = asyncHandler(async (req, res) => {
-    /* 
-     #swagger.tags = ["Auth"]
-     #swagger.summary = "Resend email verification"
-    */
+/*
+    #swagger.tags = ["Auth"]
+    #swagger.summary = "Resend email verification"
+    #swagger.security = [{ "bearerAuth": [] }]
+
+    #swagger.responses[200] = {
+        description: "Verification email sent successfully",
+        schema: {
+            $ref: "#/components/schemas/ResendEmailVerificationResponse"
+        }
+    }
+*/
     const user = await User.findById(req.user?._id);
 
     if (!user) {
@@ -281,7 +321,7 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
         subject: "Please verify ur email",
         mailgenContent: emailVerificationMailgenContent(
             user.username,
-            `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`
+            `${req.protocol}:${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`
         ),
     })
     return res
@@ -296,10 +336,26 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
 })
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    /* 
-     #swagger.tags = ["Auth"]
-     #swagger.summary = "Refresh access token"
+    /*
+        #swagger.tags = ["Auth"]
+        #swagger.summary = "Refresh access token"
+    
+        #swagger.responses[200] = {
+            description: "Access token refreshed",
+            schema: {
+                $ref: "#/components/schemas/RefreshTokenResponse"
+            },
+            headers: {
+                "Set-Cookie": {
+                    description: "HTTP-only access and refresh token cookies",
+                    schema: {
+                        type: "string"
+                    }
+                }
+            }
+        }
     */
+
     const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken
 
     if (!incomingRefreshToken) {
@@ -345,10 +401,29 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 })
 
 const forgotPassword = asyncHandler(async (req, res) => {
-    /* 
-     #swagger.tags = ["Auth"]
-     #swagger.summary = "Request password reset"
+    /*
+        #swagger.tags = ["Auth"]
+        #swagger.summary = "Request password reset"
+    
+        #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: "#/components/schemas/ForgotPasswordRequest"
+                    }
+                }
+            }
+        }
+    
+        #swagger.responses[200] = { 
+            description: "Password reset email sent",
+            schema: {
+                $ref: "#/components/schemas/ForgotPasswordResponse"
+            }
+        }
     */
+
     const { email } = req.body;
 
     const user = await User.findOne({ email })
@@ -386,9 +461,26 @@ const forgotPassword = asyncHandler(async (req, res) => {
 })
 
 const resetForgotPassword = asyncHandler(async (req, res) => {
-    /* 
-     #swagger.tags = ["Auth"]
-     #swagger.summary = "Reset password using token"
+    /*
+        #swagger.tags = ["Auth"]
+        #swagger.summary = "Reset password using token"
+        #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: '#/components/schemas/ResetPasswordRequest'
+                    }
+                }
+            }
+        }
+    
+        #swagger.responses[200] = {
+            description: 'Password reset successfully',
+            schema: {
+                $ref: '#/components/schemas/ResetPasswordResponse'
+            }
+        }
     */
     const { resetToken } = req.params
     const { newPassword } = req.body
@@ -419,17 +511,36 @@ const resetForgotPassword = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 {},
-                "Password rest successfully"
+                "Password reset successfully"
             )
         )
 
 })
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-    /* 
-     #swagger.tags = ["Auth"]
-     #swagger.summary = "Change current password"
-    */
+    /*
+        #swagger.tags = ["Auth"]
+        #swagger.summary = "Change current password"
+        #swagger.security = [{ "bearerAuth": [] }]
+    
+        #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: "#/components/schemas/ChangePasswordRequest"
+                    }
+                }
+            }
+        }
+    
+        #swagger.responses[200] = {
+            description: "Password changed successfully",
+            schema: {
+                $ref: "#/components/schemas/ChangePasswordResponse"
+            }
+        }
+      */
     const { oldPassword, newPassword } = req.body
 
     const user = await User.findById(req.user?._id)
