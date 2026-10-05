@@ -9,6 +9,18 @@ import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js"
 
 
 const getProjects = asyncHandler(async (req, res) => {
+    /*
+    #swagger.tags = ['Projects']
+    #swagger.summary = 'Get user projects'
+    #swagger.security = [{ "bearerAuth": [] }]
+
+    #swagger.responses[200] = {
+        description: 'Projects fetched successfully',
+        schema: {
+            $ref: '#/components/schemas/ProjectsResponse'
+        }
+    }
+*/
     const projects = await ProjectMember.aggregate([
         {
             $match: {
@@ -65,18 +77,39 @@ const getProjects = asyncHandler(async (req, res) => {
 });
 
 const getProjectById = asyncHandler(async (req, res) => {
-/* 
-    #swagger.tags = ['Projects'] 
-    #swagger.summary = 'Get project by ID' 
-    #swagger.security = [{ "bearerAuth": [] }] 
+    /*
+        #swagger.tags = ['Projects']
+        #swagger.summary = 'Get project by ID'
+        #swagger.security = [{ "bearerAuth": [] }]
 
-    #swagger.responses[200] = { 
-        description: 'Project fetched successfully', 
-        schema: { 
-            $ref: '#/components/schemas/ProjectResponse' 
-        } 
-    } 
-*/
+        #swagger.responses[200] = {
+            description: 'Project fetched successfully',
+            schema: {
+                $ref: '#/components/schemas/ProjectResponse'
+            }
+        }
+
+        #swagger.responses[400] = {
+            description: 'Invalid project ID or user is not a member of the project',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[404] = {
+            description: 'Project not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+    */
     const { projectId } = req.params
 
     const project = await Project.findById(projectId)
@@ -94,29 +127,43 @@ const getProjectById = asyncHandler(async (req, res) => {
 });
 
 const createProject = asyncHandler(async (req, res) => {
-/*
-    #swagger.tags = ['Projects']
-    #swagger.summary = 'Create a new project'
-    #swagger.security = [{ "bearerAuth": [] }]
+    /*
+        #swagger.tags = ['Projects']
+        #swagger.summary = 'Create a new project'
+        #swagger.security = [{ "bearerAuth": [] }]
 
-    #swagger.requestBody = {
-        required: true,
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: '#/components/schemas/CreateProjectRequest'
+        #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: '#/components/schemas/CreateProjectRequest'
+                    }
                 }
             }
         }
-    }
 
-    #swagger.responses[201] = {
-        description: 'Project created successfully',
-        schema: {
-            $ref: '#/components/schemas/CreateProjectResponse'
+        #swagger.responses[201] = {
+            description: 'Project created successfully',
+            schema: {
+                $ref: '#/components/schemas/CreateProjectResponse'
+            }
         }
-    }
- */       
+
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[422] = {
+            description: 'Validation failed',
+            schema: {
+                $ref: '#/components/schemas/ValidationErrorResponse'
+            }
+        }
+    */
     const { name, description } = req.body;
 
     const project = await Project.create({
@@ -137,28 +184,56 @@ const createProject = asyncHandler(async (req, res) => {
 });
 
 const updateProject = asyncHandler(async (req, res) => {
-/* 
-    #swagger.tags = ['Projects'] 
-    #swagger.summary = 'Update project' 
-    #swagger.security = [{ "bearerAuth": [] }] 
+    /*
+    #swagger.tags = ['Projects']
+    #swagger.summary = 'Update project'
+    #swagger.security = [{ "bearerAuth": [] }]
 
-    #swagger.requestBody = { 
-        required: true, 
-        content: { 
-            "application/json": { 
-                schema: { 
-                    $ref: '#/components/schemas/UpdateProjectRequest' 
-                } 
-            } 
-        } 
-    } 
+    #swagger.requestBody = {
+        required: true,
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: '#/components/schemas/UpdateProjectRequest'
+                }
+            }
+        }
+    }
 
-    #swagger.responses[200] = { 
-        description: 'Project updated successfully', 
-        schema: { 
-            $ref: '#/components/schemas/UpdateProjectResponse' 
-        } 
-    } 
+    #swagger.responses[200] = {
+        description: 'Project updated successfully',
+        schema: {
+            $ref: '#/components/schemas/UpdateProjectResponse'
+        }
+    }
+
+    #swagger.responses[400] = {
+        description: 'Invalid project ID or user is not authorized for this project',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[404] = {
+        description: 'Project not found',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[422] = {
+        description: 'Validation failed',
+        schema: {
+            $ref: '#/components/schemas/ValidationErrorResponse'
+        }
+    }
 */
     const { name, description } = req.body;
     const { projectId } = req.params;
@@ -181,17 +256,45 @@ const updateProject = asyncHandler(async (req, res) => {
 });
 
 const deleteProject = asyncHandler(async (req, res) => {
-/* 
-    #swagger.tags = ['Projects'] 
-    #swagger.summary = 'Delete project' 
-    #swagger.security = [{ "bearerAuth": [] }] 
+    /*
+    #swagger.tags = ['Projects']
+    #swagger.summary = 'Delete project'
+    #swagger.security = [{ "bearerAuth": [] }]
 
-    #swagger.responses[200] = { 
-        description: 'Project deleted successfully', 
-        schema: { 
-            $ref: '#/components/schemas/DeleteProjectResponse' 
-        } 
-    } 
+    #swagger.responses[200] = {
+        description: 'Project deleted successfully',
+        schema: {
+            $ref: '#/components/schemas/DeleteProjectResponse'
+        }
+    }
+
+    #swagger.responses[400] = {
+        description: 'Invalid project ID or user is not a member of the project',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[403] = {
+        description: 'User does not have permission to delete the project',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[404] = {
+        description: 'Project not found',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
 */
     const { projectId } = req.params;
 
@@ -212,36 +315,78 @@ const deleteProject = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                project,
+                {},
                 "Project deleted successfully"
             )
         );
 });
 
 const addMembersToProject = asyncHandler(async (req, res) => {
-/* 
-    #swagger.tags = ['Projects'] 
-    #swagger.summary = 'Add member to project' 
-    #swagger.security = [{ "bearerAuth": [] }] 
- 
-    #swagger.requestBody = { 
-        required: true, 
-        content: { 
-            "application/json": { 
-                schema: { 
-                    $ref: '#/components/schemas/AddProjectMemberRequest' 
-                } 
-            } 
-        } 
-    } 
- 
-    #swagger.responses[201] = { 
-        description: 'Project member added successfully', 
-        schema: { 
-            $ref: '#/components/schemas/AddProjectMemberResponse' 
-        } 
-    } 
-*/
+    /*
+        #swagger.tags = ['Projects']
+        #swagger.summary = 'Add member to project'
+        #swagger.security = [{ "bearerAuth": [] }]
+
+        #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: '#/components/schemas/AddProjectMemberRequest'
+                    }
+                }
+            }
+        }
+
+        #swagger.responses[201] = {
+            description: 'Project member added successfully',
+            schema: {
+                $ref: '#/components/schemas/AddProjectMemberResponse'
+            }
+        }
+
+        #swagger.responses[400] = {
+            description: 'Invalid project ID or invalid project/member data',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[403] = {
+            description: 'User does not have permission to add project members',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[404] = {
+            description: 'Project or user not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[409] = {
+            description: 'User is already a member of the project',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[422] = {
+            description: 'Validation failed',
+            schema: {
+                $ref: '#/components/schemas/ValidationErrorResponse'
+            }
+        }
+    */
     const { projectId } = req.params
     const { email, role } = req.body
     if (!AvailableUserRole.includes(role)) {
@@ -273,18 +418,39 @@ const addMembersToProject = asyncHandler(async (req, res) => {
 })
 
 const getProjectMembers = asyncHandler(async (req, res) => {
-/* 
-    #swagger.tags = ['Projects'] 
-    #swagger.summary = 'Get project members' 
-    #swagger.security = [{ "bearerAuth": [] }] 
+    /*
+        #swagger.tags = ['Projects']
+        #swagger.summary = 'Get project members'
+        #swagger.security = [{ "bearerAuth": [] }]
 
-    #swagger.responses[200] = { 
-        description: 'Project members fetched successfully', 
-        schema: { 
-            $ref: '#/components/schemas/ProjectMembersResponse' 
-        } 
-    } 
-*/
+        #swagger.responses[200] = {
+            description: 'Project members fetched successfully',
+            schema: {
+                $ref: '#/components/schemas/ProjectMembersResponse'
+            }
+        }
+
+        #swagger.responses[400] = {
+            description: 'Invalid project ID or user is not a member of the project',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[404] = {
+            description: 'Project not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+    */
     const { projectId } = req.params
 
     const project = await Project.findById(projectId)
@@ -339,29 +505,57 @@ const getProjectMembers = asyncHandler(async (req, res) => {
 })
 
 const updateMemberRole = asyncHandler(async (req, res) => {
-/* 
-    #swagger.tags = ['Projects'] 
-    #swagger.summary = 'Update project member role' 
-    #swagger.security = [{ "bearerAuth": [] }] 
- 
-    #swagger.requestBody = { 
-        required: true, 
-        content: { 
-            "application/json": { 
-                schema: { 
-                    $ref: '#/components/schemas/UpdateProjectMemberRequest' 
-                } 
-            } 
-        } 
-    } 
- 
-    #swagger.responses[200] = { 
-        description: 'Project member role updated successfully', 
-        schema: { 
-            $ref: '#/components/schemas/UpdateProjectMemberResponse' 
-        } 
-    } 
-*/
+    /*
+        #swagger.tags = ['Projects']
+        #swagger.summary = 'Update project member role'
+        #swagger.security = [{ "bearerAuth": [] }]
+
+        #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: '#/components/schemas/UpdateProjectMemberRequest'
+                    }
+                }
+            }
+        }
+
+        #swagger.responses[200] = {
+            description: 'Project member role updated successfully',
+            schema: {
+                $ref: '#/components/schemas/UpdateProjectMemberResponse'
+            }
+        }
+
+        #swagger.responses[400] = {
+            description: 'Invalid project ID or invalid role',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[403] = {
+            description: 'User does not have permission to update project member roles',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[404] = {
+            description: 'Project member not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+    */
     const { projectId, userId } = req.params
     const { newRole } = req.body
     if (!AvailableUserRole.includes(newRole)) {
@@ -399,18 +593,39 @@ const updateMemberRole = asyncHandler(async (req, res) => {
 })
 
 const deleteMember = asyncHandler(async (req, res) => {
-/* 
-    #swagger.tags = ['Projects'] 
-    #swagger.summary = 'Remove member from project' 
-    #swagger.security = [{ "bearerAuth": [] }] 
- 
-    #swagger.responses[200] = { 
-        description: 'Project member removed successfully', 
-        schema: { 
-            $ref: '#/components/schemas/DeleteProjectMemberResponse' 
-        } 
-    } 
-*/
+    /*
+        #swagger.tags = ['Projects']
+        #swagger.summary = 'Remove member from project'
+        #swagger.security = [{ "bearerAuth": [] }]
+
+        #swagger.responses[200] = {
+            description: 'Project member deleted successfully',
+            schema: {
+                $ref: '#/components/schemas/DeleteProjectMemberResponse'
+            }
+        }
+
+        #swagger.responses[400] = {
+            description: 'Project member not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[403] = {
+            description: 'User does not have permission to remove project members',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+    */
     const { projectId, userId } = req.params
 
     let projectMember = await ProjectMember.findOne({

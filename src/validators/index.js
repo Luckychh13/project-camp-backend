@@ -124,8 +124,9 @@ const updateTaskValidator = () => {
             .isMongoId()
             .withMessage("Invalid task id"),
         body("title")
-            .notEmpty()
-            .withMessage("Title is required"),
+            .optional({values:"falsy"})
+            .trim()
+            .notEmpty(),
         body("description")
             .optional(),
         body("assignedTo")

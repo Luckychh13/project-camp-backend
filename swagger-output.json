@@ -24,10 +24,11 @@
     },
     "/api/v1/healthcheck/": {
       "get": {
+        "summary": "Health check",
         "description": "",
         "responses": {
-          "default": {
-            "description": ""
+          "200": {
+            "description": "Server is running"
           }
         }
       }
@@ -54,6 +55,51 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "User with username or email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error while registering user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -77,7 +123,7 @@
         "description": "",
         "responses": {
           "200": {
-            "description": "User Logged in Successfully",
+            "description": "User logged in successfully",
             "headers": {
               "Set-Cookie": {
                 "description": "HTTP-only access and refresh token cookies",
@@ -95,6 +141,51 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "User does not exist or email/password is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error while generating tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -117,7 +208,7 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Verify user's email",
+        "summary": "Verify user email",
         "description": "",
         "parameters": [
           {
@@ -135,12 +226,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/verifiyEmailResponse"
+                  "$ref": "#/components/schemas/VerifyEmailResponse"
                 }
               },
               "application/xml": {
                 "schema": {
-                  "$ref": "#/components/schemas/verifiyEmailResponse"
+                  "$ref": "#/components/schemas/VerifyEmailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Verification token is missing, invalid, or expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -178,6 +284,21 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Invalid refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -201,6 +322,36 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/ForgotPasswordResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -247,6 +398,36 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/ResetPasswordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Reset token is invalid or expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -303,8 +484,28 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/auth/current-user": {
@@ -335,6 +536,21 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -375,6 +591,51 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/ChangePasswordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Old password is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -428,6 +689,51 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email is already verified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -439,12 +745,33 @@
     },
     "/api/v1/projects/": {
       "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Get user projects",
         "description": "",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Projects fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectsResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectsResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -464,6 +791,36 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/CreateProjectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -518,6 +875,51 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -554,6 +956,66 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/UpdateProjectResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not authorized for this project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -606,6 +1068,66 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to delete the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -647,6 +1169,51 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -683,6 +1250,96 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/AddProjectMemberResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid project ID or invalid project/member data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to add project members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or user not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User is already a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -745,6 +1402,66 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid project ID or invalid role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to update project member roles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project member not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -789,7 +1506,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Project member removed successfully",
+            "description": "Project member deleted successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -799,6 +1516,51 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/DeleteProjectMemberResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Project member not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to remove project members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -813,6 +1575,10 @@
     },
     "/api/v1/tasks/{projectId}": {
       "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Get project tasks",
         "description": "",
         "parameters": [
           {
@@ -826,11 +1592,62 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Tasks fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TasksResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/TasksResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Create a new task",
         "description": "",
         "parameters": [
           {
@@ -844,28 +1661,92 @@
         ],
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Task created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTaskResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to create tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "example": "any"
-                  },
-                  "description": {
-                    "example": "any"
-                  },
-                  "assignedTo": {
-                    "example": "any"
-                  },
-                  "status": {
-                    "example": "any"
-                  }
-                }
+                "$ref": "#/components/schemas/CreateTaskRequest"
               }
             }
           }
@@ -874,6 +1755,10 @@
     },
     "/api/v1/tasks/{projectId}/t/{taskId}": {
       "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Get task by ID",
         "description": "",
         "parameters": [
           {
@@ -895,60 +1780,62 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "put": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
+            "description": "Task fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetailResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetailResponse"
+                }
+              }
             }
           },
-          {
-            "name": "taskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "example": "any"
-                  },
-                  "description": {
-                    "example": "any"
-                  },
-                  "assignedTo": {
-                    "example": "any"
-                  },
-                  "status": {
-                    "example": "any"
-                  }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "delete": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Delete task",
         "description": "",
         "parameters": [
           {
@@ -970,13 +1857,196 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Task deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteTaskResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteTaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to delete tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Update task",
+        "description": "",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTaskResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to update tasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskRequest"
+              }
+            }
           }
         }
       }
     },
     "/api/v1/tasks/{projectId}/t/{taskId}/subtasks": {
       "post": {
+        "tags": [
+          "Subtasks"
+        ],
+        "summary": "Create a new subtask",
         "description": "",
         "parameters": [
           {
@@ -998,19 +2068,107 @@
         ],
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Subtask created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSubTaskResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSubTaskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to create subtasks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "example": "any"
-                  }
-                }
+                "$ref": "#/components/schemas/CreateSubTaskRequest"
               }
             }
           }
@@ -1019,6 +2177,10 @@
     },
     "/api/v1/tasks/{projectId}/st/{subTaskId}": {
       "put": {
+        "tags": [
+          "Subtasks"
+        ],
+        "summary": "Update subtask",
         "description": "",
         "parameters": [
           {
@@ -1040,28 +2202,117 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Subtask updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateSubTaskResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateSubTaskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to update the subtask",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subtask not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "example": "any"
-                  },
-                  "isCompleted": {
-                    "example": "any"
-                  }
-                }
+                "$ref": "#/components/schemas/UpdateSubTaskRequest"
               }
             }
           }
         }
       },
       "delete": {
+        "tags": [
+          "Subtasks"
+        ],
+        "summary": "Delete subtask",
         "description": "",
         "parameters": [
           {
@@ -1083,9 +2334,86 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Subtask deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteSubTaskResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteSubTaskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to delete the subtask",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subtask not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/notes/{projectId}": {
@@ -1109,8 +2437,75 @@
           "200": {
             "description": "Notes fetched successfully",
             "content": {
-              "schema": {
-                "$ref": "#/components/schemas/NotesResponse"
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotesResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to access project notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1149,6 +2544,81 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/CreateNoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to create notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -1200,8 +2670,90 @@
           "200": {
             "description": "Note fetched successfully",
             "content": {
-              "schema": {
-                "$ref": "#/components/schemas/NoteResponse"
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to access the note",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error caused by an invalid note ID format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -1238,10 +2790,92 @@
         ],
         "responses": {
           "200": {
-            "description": "Note Updated successfully",
+            "description": "Note updated successfully",
             "content": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateNoteResponse"
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateNoteResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateNoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to update notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
               }
             }
           }
@@ -1301,6 +2935,81 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid project ID or user is not a member of the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User does not have permission to delete notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error caused by an invalid note ID format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1320,6 +3029,55 @@
       }
     },
     "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Something went wrong"
+          },
+          "errors": {
+            "type": "array",
+            "example": [],
+            "items": {}
+          }
+        },
+        "xml": {
+          "name": "ErrorResponse"
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Recieved data is not valid"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "Field validation error"
+                }
+              }
+            }
+          }
+        },
+        "xml": {
+          "name": "ValidationErrorResponse"
+        }
+      },
       "CreateNoteRequest": {
         "type": "object",
         "properties": {
@@ -1748,7 +3506,7 @@
           "name": "LoginResponse"
         }
       },
-      "verifyEmailResponse": {
+      "VerifyEmailResponse": {
         "type": "object",
         "properties": {
           "statusCode": {
@@ -1774,7 +3532,7 @@
           }
         },
         "xml": {
-          "name": "verifyEmailResponse"
+          "name": "VerifyEmailResponse"
         }
       },
       "RefreshTokenResponse": {
@@ -2453,6 +4211,681 @@
         },
         "xml": {
           "name": "DeleteProjectMemberResponse"
+        }
+      },
+      "TaskAssignedUser": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012345"
+          },
+          "avatar": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "example": "https://placehold.co/200x200"
+              },
+              "localPath": {
+                "type": "string",
+                "example": ""
+              }
+            }
+          },
+          "username": {
+            "type": "string",
+            "example": "jhon"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Jhon"
+          }
+        },
+        "required": [
+          "_id",
+          "username"
+        ],
+        "xml": {
+          "name": "TaskAssignedUser"
+        }
+      },
+      "TaskAttachment": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012346"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://example.com/files/document.pdf"
+          },
+          "mimetype": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "size": {
+            "type": "number",
+            "example": 245760
+          }
+        },
+        "required": [
+          "_id",
+          "url",
+          "mimetype",
+          "size"
+        ],
+        "xml": {
+          "name": "TaskAttachment"
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012347"
+          },
+          "title": {
+            "type": "string",
+            "example": "Implement authentication"
+          },
+          "description": {
+            "type": "string",
+            "example": "Implement JWT authentication"
+          },
+          "project": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012348"
+          },
+          "assignedTo": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012349"
+          },
+          "assignedBy": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012350"
+          },
+          "status": {
+            "type": "string",
+            "example": "TODO"
+          },
+          "attachments": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "example": "array"
+              },
+              "items": {
+                "xml": {
+                  "name": "taskattachment"
+                },
+                "$ref": "#/components/schemas/TaskAttachment"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-04T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-04T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "_id",
+          "title",
+          "project",
+          "assignedBy"
+        ],
+        "xml": {
+          "name": "Task"
+        }
+      },
+      "TaskListItem": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012347"
+          },
+          "title": {
+            "type": "string",
+            "example": "Implement authentication"
+          },
+          "description": {
+            "type": "string",
+            "example": "Implement JWT authentication"
+          },
+          "project": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012348"
+          },
+          "assignedTo": {
+            "xml": {
+              "name": "taskassigneduser"
+            },
+            "$ref": "#/components/schemas/TaskAssignedUser"
+          },
+          "assignedBy": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012350"
+          },
+          "status": {
+            "type": "string",
+            "example": "TODO"
+          },
+          "attachments": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "example": "array"
+              },
+              "items": {
+                "xml": {
+                  "name": "taskattachment"
+                },
+                "$ref": "#/components/schemas/TaskAttachment"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-04T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-04T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "_id",
+          "title",
+          "project",
+          "assignedBy"
+        ],
+        "xml": {
+          "name": "TaskListItem"
+        }
+      },
+      "TasksResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "example": "array"
+              },
+              "items": {
+                "xml": {
+                  "name": "tasklistitem"
+                },
+                "$ref": "#/components/schemas/TaskListItem"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Task fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "TasksResponse"
+        }
+      },
+      "CreateTaskResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 201
+          },
+          "data": {
+            "xml": {
+              "name": "task"
+            },
+            "$ref": "#/components/schemas/Task"
+          },
+          "message": {
+            "type": "string",
+            "example": "Task created successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "CreateTaskResponse"
+        }
+      },
+      "SubTaskCreatedBy": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012351"
+          },
+          "username": {
+            "type": "string",
+            "example": "jhon"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Jhon"
+          },
+          "avatar": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "example": "https://placehold.co/200x200"
+              },
+              "localPath": {
+                "type": "string",
+                "example": ""
+              }
+            }
+          }
+        },
+        "required": [
+          "_id",
+          "username"
+        ],
+        "xml": {
+          "name": "SubTaskCreatedBy"
+        }
+      },
+      "SubTask": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012353"
+          },
+          "title": {
+            "type": "string",
+            "example": "Implement login validation"
+          },
+          "task": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012354"
+          },
+          "isCompleted": {
+            "type": "boolean",
+            "example": false
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012355"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-05T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-05T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "_id",
+          "title",
+          "task",
+          "createdBy"
+        ],
+        "xml": {
+          "name": "SubTask"
+        }
+      },
+      "TaskDetail": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012347"
+          },
+          "title": {
+            "type": "string",
+            "example": "Implement authentication"
+          },
+          "description": {
+            "type": "string",
+            "example": "Implement JWT authentication"
+          },
+          "project": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012348"
+          },
+          "assignedTo": {
+            "xml": {
+              "name": "taskassigneduser"
+            },
+            "$ref": "#/components/schemas/TaskAssignedUser"
+          },
+          "assignedBy": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012350"
+          },
+          "status": {
+            "type": "string",
+            "example": "todo"
+          },
+          "attachments": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "example": "array"
+              },
+              "items": {
+                "xml": {
+                  "name": "taskattachment"
+                },
+                "$ref": "#/components/schemas/TaskAttachment"
+              }
+            }
+          },
+          "subtasks": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "example": "array"
+              },
+              "items": {
+                "xml": {
+                  "name": "subtask"
+                },
+                "$ref": "#/components/schemas/SubTask"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-04T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-04T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "_id",
+          "title",
+          "project",
+          "assignedBy"
+        ],
+        "xml": {
+          "name": "TaskDetail"
+        }
+      },
+      "TaskDetailResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "xml": {
+              "name": "taskdetail"
+            },
+            "$ref": "#/components/schemas/TaskDetail"
+          },
+          "message": {
+            "type": "string",
+            "example": "Task fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "TaskDetailResponse"
+        }
+      },
+      "UpdateTaskResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "xml": {
+              "name": "tasklistitem"
+            },
+            "$ref": "#/components/schemas/TaskListItem"
+          },
+          "message": {
+            "type": "string",
+            "example": "Task updated successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "UpdateTaskResponse"
+        }
+      },
+      "DeleteTaskResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "Task deleted successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "DeleteTaskResponse"
+        }
+      },
+      "CreateSubTaskRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Implement login validation"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "xml": {
+          "name": "CreateSubTaskRequest"
+        }
+      },
+      "UpdateSubTaskRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Updated subtask title"
+          },
+          "isCompleted": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "UpdateSubTaskRequest"
+        }
+      },
+      "CreateSubTaskResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 201
+          },
+          "data": {
+            "xml": {
+              "name": "subtask"
+            },
+            "$ref": "#/components/schemas/SubTask"
+          },
+          "message": {
+            "type": "string",
+            "example": "subTask created successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "CreateSubTaskResponse"
+        }
+      },
+      "UpdateSubTaskResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "xml": {
+              "name": "subtask"
+            },
+            "$ref": "#/components/schemas/SubTask"
+          },
+          "message": {
+            "type": "string",
+            "example": "SubTask updated successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "UpdateSubTaskResponse"
+        }
+      },
+      "DeleteSubTaskResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          },
+          "message": {
+            "type": "string",
+            "example": "SubTask deleted successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "xml": {
+          "name": "DeleteSubTaskResponse"
+        }
+      },
+      "CreateTaskRequest": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Implement authentication"
+          },
+          "description": {
+            "type": "string",
+            "example": "Implement JWT authentication"
+          },
+          "assignedTo": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012349"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "todo",
+              "in_progress",
+              "done"
+            ],
+            "example": "todo"
+          },
+          "attachments": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        }
+      },
+      "UpdateTaskRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Updated task title"
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated task description"
+          },
+          "assignedTo": {
+            "type": "string",
+            "example": "65f1a2b3c4d5e6f789012349"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "todo",
+              "in_progress",
+              "done"
+            ],
+            "example": "in_progress"
+          },
+          "attachments": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
         }
       }
     }

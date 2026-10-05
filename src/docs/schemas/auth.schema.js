@@ -52,7 +52,7 @@ export const authSchemas = {
         message: "User logged in successfully",
         success: true
     },
-    verifyEmailResponse: {
+    VerifyEmailResponse: {
         statusCode: 200,
         data: {
             isEmailVerified: true

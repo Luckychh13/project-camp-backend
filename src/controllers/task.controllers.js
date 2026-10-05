@@ -13,6 +13,32 @@ import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js"
 
 
 const getTasks = asyncHandler(async (req, res) => {
+    /*
+        #swagger.tags = ['Tasks']
+        #swagger.summary = 'Get project tasks'
+        #swagger.security = [{ "bearerAuth": [] }]
+
+        #swagger.responses[200] = {
+            description: 'Tasks fetched successfully',
+            schema: {
+                $ref: '#/components/schemas/TasksResponse'
+            }
+        }
+
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[404] = {
+            description: 'Project not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+    */
     const { projectId } = req.params
     const project = await Project.findById(projectId)
     if (!project) {
@@ -34,6 +60,57 @@ const getTasks = asyncHandler(async (req, res) => {
 })
 
 const createTask = asyncHandler(async (req, res) => {
+   /*
+    #swagger.tags = ['Tasks']
+    #swagger.summary = 'Create a new task'
+    #swagger.security = [{ "bearerAuth": [] }]
+
+    #swagger.requestBody = {
+        required: true,
+        content: {
+            "multipart/form-data": {
+                schema: {
+                    $ref: '#/components/schemas/CreateTaskRequest'
+                }
+            }
+        }
+    }
+
+    #swagger.responses[201] = {
+        description: 'Task created successfully',
+        schema: {
+            $ref: '#/components/schemas/CreateTaskResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[403] = {
+        description: 'User does not have permission to create tasks',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[404] = {
+        description: 'Project not found',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[422] = {
+        description: 'Validation failed',
+        schema: {
+            $ref: '#/components/schemas/ValidationErrorResponse'
+        }
+    }
+*/
     const { title, description, assignedTo, status } = req.body
     const { projectId } = req.params
 
@@ -73,6 +150,32 @@ const createTask = asyncHandler(async (req, res) => {
 })
 
 const getTaskById = asyncHandler(async (req, res) => {
+/*
+    #swagger.tags = ['Tasks']
+    #swagger.summary = 'Get task by ID'
+    #swagger.security = [{ "bearerAuth": [] }]
+
+    #swagger.responses[200] = {
+        description: 'Task fetched successfully',
+        schema: {
+            $ref: '#/components/schemas/TaskDetailResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[404] = {
+        description: 'Task not found',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+*/
     const { projectId, taskId } = req.params
     const task = await Task.aggregate([
         {
@@ -158,9 +261,77 @@ const getTaskById = asyncHandler(async (req, res) => {
 })
 
 const updateTask = asyncHandler(async (req, res) => {
-    const { taskId } = req.params
+    /*
+    #swagger.tags = ['Tasks']
+    #swagger.summary = 'Update task'
+    #swagger.security = [{ "bearerAuth": [] }]
+
+    #swagger.requestBody = {
+        required: true,
+        content: {
+            "multipart/form-data": {
+                schema: {
+                    $ref: '#/components/schemas/UpdateTaskRequest'
+                }
+            }
+        }
+    }
+
+    #swagger.responses[200] = {
+        description: 'Task updated successfully',
+        schema: {
+            $ref: '#/components/schemas/UpdateTaskResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[403] = {
+        description: 'User does not have permission to update tasks',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[404] = {
+        description: 'Task not found',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[422] = {
+        description: 'Validation failed',
+        schema: {
+            $ref: '#/components/schemas/ValidationErrorResponse'
+        }
+    }
+*/
+    const { taskId, projectId } = req.params
     const { title, description, assignedTo, status } = req.body
     const files = req.files || []
+    const updateData = {}
+
+    if (title !== undefined && title !== "") {
+        updateData.title = title
+    }
+
+    if (description !== undefined && description !== "") {
+        updateData.description = description
+    }
+
+    if (assignedTo !== undefined && assignedTo !== "") {
+        updateData.assignedTo = new mongoose.Types.ObjectId(assignedTo)
+    }
+
+    if (status !== undefined && status !== "") {
+        updateData.status = status
+    }
 
     const newattachments = files.map((file) => {
         return {
@@ -169,40 +340,87 @@ const updateTask = asyncHandler(async (req, res) => {
             size: file.size
         }
     })
-    const task = await Task.findByIdAndUpdate(
-        taskId,
-        {
-            $set: {
-                title,
-                description,
-                assignedTo: assignedTo ? new mongoose.Types.ObjectId(assignedTo) : undefined,
-                status
-            },
-            $push: {
-                attachments: {
-                    $each: newattachments
-                }
+
+    if (
+        Object.keys(updateData).length === 0 &&
+        newattachments.length === 0
+    ) {
+        throw new ApiError(400, "At least one field is required to update task")
+    }
+
+    const updateOperation = {
+        $set: updateData
+    }
+
+    if (newattachments.length > 0) {
+        updateOperation.$push = {
+            attachments: {
+                $each: newattachments
             }
+        }
+    }
+
+    const task = await Task.findOneAndUpdate(
+        {
+            _id: taskId,
+            project: projectId
         },
+        updateOperation,
         {
             new: true
         }
-    ).populate("assignedTo", " username avatar fullName")
+    ).populate("assignedTo", "username avatar fullName")
+
     if (!task) {
         throw new ApiError(404, "Task not found")
     }
 
     return res
         .status(200)
-        .json(new ApiResponse(
-            200,
-            task,
-            "Task updated successfully"
-        ))
+        .json(
+            new ApiResponse(
+                200,
+                task,
+                "Task updated successfully"
+            )
+        )
 
 })
 
 const deleteTask = asyncHandler(async (req, res) => {
+    /*
+    #swagger.tags = ['Tasks']
+    #swagger.summary = 'Delete task'
+    #swagger.security = [{ "bearerAuth": [] }]
+
+    #swagger.responses[200] = {
+        description: 'Task deleted successfully',
+        schema: {
+            $ref: '#/components/schemas/DeleteTaskResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[403] = {
+        description: 'User does not have permission to delete tasks',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[404] = {
+        description: 'Task not found',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+*/
     const { projectId, taskId } = req.params
 
     const task = await Task.findOne({
@@ -243,12 +461,70 @@ const deleteTask = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(
             200,
-            task,
+            {},
             "Task deleted successfully"
         ))
 })
 
 const createSubTask = asyncHandler(async (req, res) => {
+/*
+    #swagger.tags = ['Subtasks']
+    #swagger.summary = 'Create a new subtask'
+    #swagger.security = [{ "bearerAuth": [] }]
+
+    #swagger.requestBody = {
+        required: true,
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: '#/components/schemas/CreateSubTaskRequest'
+                }
+            }
+        }
+    }
+
+    #swagger.responses[201] = {
+        description: 'Subtask created successfully',
+        schema: {
+            $ref: '#/components/schemas/CreateSubTaskResponse'
+        }
+    }
+
+    #swagger.responses[400] = {
+        description: 'Invalid project ID or user is not a member of the project',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[403] = {
+        description: 'User does not have permission to create subtasks',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[404] = {
+        description: 'Task not found',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[422] = {
+        description: 'Validation failed',
+        schema: {
+            $ref: '#/components/schemas/ValidationErrorResponse'
+        }
+    }
+*/
     const { projectId, taskId } = req.params
     const { title } = req.body
 
@@ -278,6 +554,64 @@ const createSubTask = asyncHandler(async (req, res) => {
 })
 
 const updateSubTask = asyncHandler(async (req, res) => {
+ /*
+    #swagger.tags = ['Subtasks']
+    #swagger.summary = 'Update subtask'
+    #swagger.security = [{ "bearerAuth": [] }]
+
+    #swagger.requestBody = {
+        required: true,
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: '#/components/schemas/UpdateSubTaskRequest'
+                }
+            }
+        }
+    }
+
+    #swagger.responses[200] = {
+        description: 'Subtask updated successfully',
+        schema: {
+            $ref: '#/components/schemas/UpdateSubTaskResponse'
+        }
+    }
+
+    #swagger.responses[400] = {
+        description: 'Invalid project ID or user is not a member of the project',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[403] = {
+        description: 'User does not have permission to update the subtask',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[404] = {
+        description: 'Subtask not found',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[422] = {
+        description: 'Validation failed',
+        schema: {
+            $ref: '#/components/schemas/ValidationErrorResponse'
+        }
+    }
+*/
     const { projectId, subTaskId } = req.params
     const { title, isCompleted } = req.body
 
@@ -313,6 +647,46 @@ const updateSubTask = asyncHandler(async (req, res) => {
 })
 
 const deleteSubTask = asyncHandler(async (req, res) => {
+/*
+    #swagger.tags = ['Subtasks']
+    #swagger.summary = 'Delete subtask'
+    #swagger.security = [{ "bearerAuth": [] }]
+
+    #swagger.responses[200] = {
+        description: 'Subtask deleted successfully',
+        schema: {
+            $ref: '#/components/schemas/DeleteSubTaskResponse'
+        }
+    }
+
+    #swagger.responses[400] = {
+        description: 'Invalid project ID or user is not a member of the project',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[403] = {
+        description: 'User does not have permission to delete the subtask',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[404] = {
+        description: 'Subtask not found',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+*/
     const { projectId, subTaskId } = req.params
 
     const subTask = await SubTask.findById(subTaskId).populate("task")
@@ -327,7 +701,7 @@ const deleteSubTask = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(
             200,
-            deletedSubTask,
+            {},
             "SubTask deleted successfully"
         ))
 })
