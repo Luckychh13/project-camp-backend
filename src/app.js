@@ -3,6 +3,8 @@ import cors from "cors"
 import cookieParser from "cookie-parser"
 import swaggerUi from "swagger-ui-express"
 import fs from "fs"
+import helmet from "helmet"
+import { apiRateLimiter } from "./middlewares/rate-limit.middleware.js"
 
 const app = express()
 //basic configutrations
@@ -13,11 +15,18 @@ app.use(cookieParser())
 
 //cors configurations
 app.use(cors({
-    origin: process.env.CORS_ORIGIN?.split(",") || "http://localhost:5173",
+    origin: process.env.CORS_ORIGIN,
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }))
+const isProduction = process.env.NODE_ENV === "production"
+app.use(helmet({
+    hsts:isProduction
+}))
+
+//Global rate-limiter
+app.use("/api/v1", apiRateLimiter)
 
 //import the routes
 import healthCheckRouter from "./routes/healthcheck.routes.js"

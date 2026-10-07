@@ -124,15 +124,16 @@ const updateTaskValidator = () => {
             .isMongoId()
             .withMessage("Invalid task id"),
         body("title")
-            .optional({values:"falsy"})
+            .optional({ values: "falsy" })
             .trim()
             .notEmpty(),
         body("description")
             .optional(),
         body("assignedTo")
-            .optional()
+            .trim()
+            .optional({ values: "falsy" })
             .isMongoId()
-            .withMessage("Invalid assigned id"),
+            .withMessage("Invalid assigned user id"),
         body("status")
             .optional()
             .isIn(AvailableTaskStatus)
@@ -209,7 +210,55 @@ const updateNoteValidator = () => {
         body("content")
             .trim()
             .notEmpty()
-            .withMessage("Content is required")
+            .withMessage("Content is required"),
+    ]
+}
+
+const getTaskByIdValidator = () => {
+    return [
+        param("projectId")
+            .isMongoId()
+            .withMessage("Invalid project id"),
+
+        param("taskId")
+            .isMongoId()
+            .withMessage("Invalid task id")
+    ]
+}
+
+const deleteTaskValidator = () => {
+    return [
+        param("projectId")
+            .isMongoId()
+            .withMessage("Invalid project id"),
+
+        param("taskId")
+            .isMongoId()
+            .withMessage("Invalid task id")
+    ]
+}
+
+const getNoteByIdValidator = () => {
+    return [
+        param("projectId")
+            .isMongoId()
+            .withMessage("Invalid project id"),
+
+        param("noteId")
+            .isMongoId()
+            .withMessage("Invalid note id")
+    ]
+}
+
+const deleteNoteValidator = () => {
+    return [
+        param("projectId")
+            .isMongoId()
+            .withMessage("Invalid project id"),
+
+        param("noteId")
+            .isMongoId()
+            .withMessage("Invalid note id")
     ]
 }
 
@@ -226,5 +275,9 @@ export {
     createSubTaskValidator,
     updateSubTaskValidator,
     createNoteValidator,
-    updateNoteValidator
+    updateNoteValidator,
+    getTaskByIdValidator,
+    deleteTaskValidator,
+    getNoteByIdValidator,
+    deleteNoteValidator
 }

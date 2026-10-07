@@ -1,10 +1,8 @@
 {
   "name": "projectmanagement",
   "version": "1.0.0",
-  "description": "a project management applicaiton for beginers",
+  "description": "a project management application ",
   "keywords": [
-    "udemy",
-    "cource",
     "backend",
     "API",
     "creation"
@@ -32,12 +30,14 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
     "express-validator": "^7.3.2",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mailgen": "^2.0.34",
     "mongoose": "^9.7.3",
-    "multer": "^2.2.0",
-    "nodemailer": "^9.0.3",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.0.15",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1"
   }

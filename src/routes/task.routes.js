@@ -7,16 +7,18 @@ import {
     getTaskById,
     getTasks,
     updateSubTask,
-    updateTask
+    updateTask,
 } from "../controllers/task.controllers.js"
 import {validate} from "../middlewares/validator.middleware.js"
 import { createTaskValidator,
     updateTaskValidator,
     createSubTaskValidator,
-    updateSubTaskValidator
+    updateSubTaskValidator,
+    getTaskByIdValidator,
+    deleteTaskValidator,
  } from "../validators/index.js"
 import { verifyJWT, validateProjectPermissions} from "../middlewares/auth.middleware.js"
-import {upload} from "../middlewares/multer.middlerware.js"
+import {upload,uploadAttachments} from "../middlewares/multer.middlerware.js"
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js"
 
 const router=Router()
@@ -24,23 +26,28 @@ router.use(verifyJWT)
 
 router
    .route("/:projectId")
-   .get(validateProjectPermissions(AvailableUserRole),getTasks)
+   .get( validateProjectPermissions(AvailableUserRole), getTasks)
    .post(
         validateProjectPermissions([UserRolesEnum.ADMIN,UserRolesEnum.PROJECT_ADMIN]),
-        upload.array("attachments",5),createTaskValidator(),validate,createTask
+        uploadAttachments,
+        createTaskValidator(),
+        validate,
+        createTask
     )
 
 router
     .route("/:projectId/t/:taskId")
-    .get(validateProjectPermissions(AvailableUserRole), getTaskById)
+    .get(getTaskByIdValidator(), validate, validateProjectPermissions(AvailableUserRole), getTaskById)
     .patch(
         validateProjectPermissions([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
-        upload.array("attachments", 5),
+        uploadAttachments,
         updateTaskValidator(),
         validate,
         updateTask
     )
     .delete(
+        deleteTaskValidator(),
+        validate,
         validateProjectPermissions([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
         deleteTask
     )
