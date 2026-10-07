@@ -112,6 +112,10 @@ const getProjectById = asyncHandler(async (req, res) => {
     */
     const { projectId } = req.params
 
+    if (!mongoose.isValidObjectId(projectId)) {
+        throw new ApiError(400, "Invalid project id")
+    }
+
     const project = await Project.findById(projectId)
     if (!project) {
         throw new ApiError(404, "Project not found")

@@ -183,6 +183,13 @@ const getNoteById = asyncHandler(async (req, res) => {
         }
     }
 
+    #swagger.responses[422] = {
+        description: 'Validation failed',
+        schema: {
+            $ref: '#/components/schemas/ValidationErrorResponse'
+        }
+    }
+
     #swagger.responses[500] = {
         description: 'Internal server error caused by an invalid note ID format',
         schema: {
@@ -328,6 +335,13 @@ const deleteNote = asyncHandler(async (req, res) => {
         description: 'Note not found',
         schema: {
             $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[422] = {
+        description: 'Validation failed',
+        schema: {
+            $ref: '#/components/schemas/ValidationErrorResponse'
         }
     }
 

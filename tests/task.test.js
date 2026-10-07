@@ -256,6 +256,12 @@ describe("Task API", () => {
         const testData = await createTestSetup()
         const assignedUserData = await createTestAuthSetup()
 
+        await ProjectMember.create({
+            user: assignedUserData.user._id,
+            project: testData.project._id,
+            role: UserRolesEnum.MEMBER
+        })
+
         try {
             const response = await testData.agent
                 .post(`/api/v1/tasks/${testData.project._id}`)
@@ -274,6 +280,11 @@ describe("Task API", () => {
                 assignedUserData.user._id.toString()
             )
         } finally {
+            await ProjectMember.deleteOne({
+                user: assignedUserData.user._id,
+                project: testData.project._id
+            })
+
             await cleanupTestData(testData)
             await cleanupTestData(assignedUserData)
         }
@@ -464,7 +475,7 @@ describe("Task API", () => {
         const fakeTaskId = new mongoose.Types.ObjectId()
 
         const response = await request(app)
-            .put(
+            .patch(
                 `/api/v1/tasks/${fakeProjectId}/t/${fakeTaskId}`
             )
             .send({
@@ -479,7 +490,7 @@ describe("Task API", () => {
     }, 15000)
 
 
-    test("should reject update task without title", async () => {
+    test("should update task without providing title", async () => {
         const testData = await createTestSetup()
 
         try {
@@ -489,28 +500,30 @@ describe("Task API", () => {
                     title: "Original Task"
                 })
 
+            expect(createResponse.statusCode).toBe(201)
+
             const task = createResponse.body.data
 
             const response = await testData.agent
-                .put(
+                .patch(
                     `/api/v1/tasks/${testData.project._id}/t/${task._id}`
                 )
                 .send({
                     description: "Updated description"
                 })
 
-            expect(response.statusCode).toBe(422)
-            expect(response.body.success).toBe(false)
+            expect(response.statusCode).toBe(200)
+            expect(response.body.success).toBe(true)
             expect(response.body.message).toBe(
-                "Recieved data is not valid"
+                "Task updated successfully"
             )
 
-            expect(response.body.errors).toEqual(
-                expect.arrayContaining([
-                    expect.objectContaining({
-                        title: "Title is required"
-                    })
-                ])
+            expect(response.body.data.title).toBe(
+                "Original Task"
+            )
+
+            expect(response.body.data.description).toBe(
+                "Updated description"
             )
         } finally {
             await cleanupTestData(testData)
@@ -523,7 +536,7 @@ describe("Task API", () => {
 
         try {
             const response = await testData.agent
-                .put(
+                .patch(
                     `/api/v1/tasks/${testData.project._id}/t/invalid-task-id`
                 )
                 .send({
@@ -560,7 +573,7 @@ describe("Task API", () => {
             const task = createResponse.body.data
 
             const response = await testData.agent
-                .put(
+                .patch(
                     `/api/v1/tasks/${testData.project._id}/t/${task._id}`
                 )
                 .send({
@@ -614,7 +627,7 @@ describe("Task API", () => {
             const task = createResponse.body.data
 
             const response = await testData.agent
-                .put(
+                .patch(
                     `/api/v1/tasks/${testData.project._id}/t/${task._id}`
                 )
                 .send({
@@ -667,7 +680,7 @@ describe("Task API", () => {
             })
 
             const response = await memberData.agent
-                .put(
+                .patch(
                     `/api/v1/tasks/${ownerData.project._id}/t/${task._id}`
                 )
                 .send({
@@ -700,7 +713,7 @@ describe("Task API", () => {
             const task = createResponse.body.data
 
             const response = await nonMemberData.agent
-                .put(
+                .patch(
                     `/api/v1/tasks/${ownerData.project._id}/t/${task._id}`
                 )
                 .send({
@@ -725,7 +738,7 @@ describe("Task API", () => {
 
         try {
             const response = await testData.agent
-                .put(
+                .patch(
                     `/api/v1/tasks/${testData.project._id}/t/${fakeTaskId}`
                 )
                 .send({
@@ -1412,6 +1425,7 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should create task with attachment successfully", async () => {
         const testData = await createTestSetup()
 
@@ -1454,6 +1468,7 @@ describe("Task API", () => {
             await cleanupTestData(testData)
         }
     }, 15000)
+
 
     test("should create task with five attachments successfully", async () => {
         const testData = await createTestSetup()
@@ -1502,6 +1517,7 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should reject task creation with more than five attachments", async () => {
         const testData = await createTestSetup()
 
@@ -1510,7 +1526,6 @@ describe("Task API", () => {
                 .post(`/api/v1/tasks/${testData.project._id}`)
                 .field("title", "Task With Too Many Attachments")
                 .field("description", "Testing attachment limit")
-
                 .attach("attachments", Buffer.from("Test file 1"), "test1.txt")
                 .attach("attachments", Buffer.from("Test file 2"), "test2.txt")
                 .attach("attachments", Buffer.from("Test file 3"), "test3.txt")
@@ -1524,6 +1539,7 @@ describe("Task API", () => {
             await cleanupTestData(testData)
         }
     }, 15000)
+
 
     test("should reject task creation when attachment exceeds file size limit", async () => {
         const testData = await createTestSetup()
@@ -1544,6 +1560,7 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should update task with attachment successfully", async () => {
         const testData = await createTestSetup()
 
@@ -1558,7 +1575,7 @@ describe("Task API", () => {
             const taskId = taskResponse.body.data._id
 
             const response = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .field("title", "Updated Task")
                 .field("description", "Updated description")
                 .attach(
@@ -1569,7 +1586,9 @@ describe("Task API", () => {
 
             expect(response.statusCode).toBe(200)
             expect(response.body.success).toBe(true)
-            expect(response.body.message).toBe("Task updated successfully")
+            expect(response.body.message).toBe(
+                "Task updated successfully"
+            )
 
             expect(response.body.data).toBeDefined()
             expect(response.body.data.title).toBe("Updated Task")
@@ -1583,11 +1602,14 @@ describe("Task API", () => {
                 })
             )
 
-            expect(response.body.data.attachments[0].url).toContain("/images/")
+            expect(response.body.data.attachments[0].url).toContain(
+                "/images/"
+            )
         } finally {
             await cleanupTestData(testData)
         }
     }, 15000)
+
 
     test("should preserve existing attachment when adding another attachment", async () => {
         const testData = await createTestSetup()
@@ -1612,7 +1634,7 @@ describe("Task API", () => {
                 createResponse.body.data.attachments[0].url
 
             const updateResponse = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .field("title", "Task With Two Attachments")
                 .field("description", "Added another attachment")
                 .attach(
@@ -1623,7 +1645,9 @@ describe("Task API", () => {
 
             expect(updateResponse.statusCode).toBe(200)
             expect(updateResponse.body.success).toBe(true)
-            expect(updateResponse.body.message).toBe("Task updated successfully")
+            expect(updateResponse.body.message).toBe(
+                "Task updated successfully"
+            )
 
             expect(updateResponse.body.data.attachments).toHaveLength(2)
 
@@ -1635,13 +1659,17 @@ describe("Task API", () => {
 
             expect(
                 updateResponse.body.data.attachments.some(
-                    attachment => attachment.url.includes("second.txt")
+                    attachment =>
+                        attachment.mimetype === "text/plain" &&
+                        attachment.size > 0 &&
+                        attachment.url.includes("/images/")
                 )
             ).toBe(true)
         } finally {
             await cleanupTestData(testData)
         }
     }, 15000)
+
 
     test("should preserve existing attachments when updating task without new attachment", async () => {
         const testData = await createTestSetup()
@@ -1666,7 +1694,7 @@ describe("Task API", () => {
                 createResponse.body.data.attachments
 
             const updateResponse = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .send({
                     title: "Updated Task",
                     description: "Updated description"
@@ -1693,6 +1721,7 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should update task with five attachments successfully", async () => {
         const testData = await createTestSetup()
 
@@ -1707,7 +1736,7 @@ describe("Task API", () => {
             const taskId = createResponse.body.data._id
 
             const updateResponse = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .field("title", "Task With Five Attachments")
                 .field("description", "Updated with five files")
                 .attach("attachments", Buffer.from("File 1"), "file1.txt")
@@ -1739,6 +1768,7 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should reject updating task with more than five attachments", async () => {
         const testData = await createTestSetup()
 
@@ -1753,10 +1783,9 @@ describe("Task API", () => {
             const taskId = createResponse.body.data._id
 
             const updateResponse = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .field("title", "Task With Too Many Attachments")
                 .field("description", "Testing six files")
-
                 .attach("attachments", Buffer.from("File 1"), "file1.txt")
                 .attach("attachments", Buffer.from("File 2"), "file2.txt")
                 .attach("attachments", Buffer.from("File 3"), "file3.txt")
@@ -1770,6 +1799,7 @@ describe("Task API", () => {
             await cleanupTestData(testData)
         }
     }, 15000)
+
 
     test("should reject updating task with attachment exceeding file size limit", async () => {
         const testData = await createTestSetup()
@@ -1790,7 +1820,7 @@ describe("Task API", () => {
             )
 
             const updateResponse = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .field("title", "Task With Large Attachment")
                 .field("description", "Testing large file")
                 .attach("attachments", largeFile, "large-file.txt")
@@ -1801,6 +1831,7 @@ describe("Task API", () => {
             await cleanupTestData(testData)
         }
     }, 15000)
+
 
     test("should reject attachment with unexpected field name", async () => {
         const testData = await createTestSetup()
@@ -1823,6 +1854,7 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should reject task creation with attachment when title is missing", async () => {
         const testData = await createTestSetup()
 
@@ -1842,6 +1874,7 @@ describe("Task API", () => {
             await cleanupTestData(testData)
         }
     }, 15000)
+
 
     test("should reject task creation with invalid assignedTo and attachment", async () => {
         const testData = await createTestSetup()
@@ -1865,6 +1898,7 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should reject task update with invalid assignedTo and attachment", async () => {
         const testData = await createTestSetup()
 
@@ -1879,7 +1913,7 @@ describe("Task API", () => {
             const taskId = createResponse.body.data._id
 
             const response = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .field("title", "Updated Task")
                 .field("description", "Updated description")
                 .field("assignedTo", "invalid-object-id")
@@ -1896,6 +1930,7 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should reject task update with invalid status and attachment", async () => {
         const testData = await createTestSetup()
 
@@ -1910,7 +1945,7 @@ describe("Task API", () => {
             const taskId = createResponse.body.data._id
 
             const response = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .field("title", "Updated Task")
                 .field("description", "Updated description")
                 .field("status", "invalid_status")
@@ -1927,6 +1962,7 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should update task with valid status and attachment successfully", async () => {
         const testData = await createTestSetup()
 
@@ -1941,7 +1977,7 @@ describe("Task API", () => {
             const taskId = createResponse.body.data._id
 
             const response = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .field("title", "Updated Task")
                 .field("description", "Updated description")
                 .field("status", "in_progress")
@@ -1969,9 +2005,16 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should update task with valid assignedTo and attachment successfully", async () => {
         const testData = await createTestSetup()
         const assignedUser = await createTestUser()
+
+        await ProjectMember.create({
+            user: assignedUser._id,
+            project: testData.project._id,
+            role: UserRolesEnum.MEMBER
+        })
 
         try {
             const createResponse = await testData.agent
@@ -1984,7 +2027,7 @@ describe("Task API", () => {
             const taskId = createResponse.body.data._id
 
             const response = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .field("title", "Updated Task")
                 .field("description", "Updated description")
                 .field("assignedTo", assignedUser._id.toString())
@@ -2009,10 +2052,16 @@ describe("Task API", () => {
                 assignedUser._id.toString()
             )
         } finally {
+            await ProjectMember.deleteOne({
+                user: assignedUser._id,
+                project: testData.project._id
+            })
+
             await cleanupTestData(testData)
             await User.findByIdAndDelete(assignedUser._id)
         }
     }, 15000)
+
 
     test("should create task with valid status and attachment successfully", async () => {
         const testData = await createTestSetup()
@@ -2045,6 +2094,7 @@ describe("Task API", () => {
             await cleanupTestData(testData)
         }
     }, 15000)
+
 
     test("should create task with attachment just below 1 MB", async () => {
         const testData = await createTestSetup()
@@ -2079,6 +2129,7 @@ describe("Task API", () => {
         }
     }, 15000)
 
+
     test("should reject task update with unexpected attachment field", async () => {
         const testData = await createTestSetup()
 
@@ -2093,7 +2144,7 @@ describe("Task API", () => {
             const taskId = createResponse.body.data._id
 
             const response = await testData.agent
-                .put(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
+                .patch(`/api/v1/tasks/${testData.project._id}/t/${taskId}`)
                 .field("title", "Updated Task")
                 .field("description", "Updated description")
                 .attach(
@@ -2108,6 +2159,7 @@ describe("Task API", () => {
             await cleanupTestData(testData)
         }
     }, 15000)
+
 
     test("should delete attachment file from filesystem when task is deleted", async () => {
         const testData = await createTestSetup()
@@ -2160,7 +2212,6 @@ describe("Task API", () => {
 
             expect(deletedTask).toBeNull()
 
-            // File must no longer exist
             await expect(
                 fs.access(filePath)
             ).rejects.toThrow()

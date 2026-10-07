@@ -10,7 +10,9 @@ import {
 
 import {
     createNoteValidator,
-    updateNoteValidator
+    updateNoteValidator,
+    getNoteByIdValidator,
+    deleteNoteValidator
 } from "../validators/index.js"
 
 import {
@@ -31,12 +33,6 @@ router.use(verifyJWT)
 
 router
     .route("/:projectId")
-    /**
-     * @swagger
-     * /api/v1/notes/{projectId}:
-     *   get:
-     *     summary: Get project notes
-     */
     .get(
         validateProjectPermissions(AvailableUserRole),
         getNotes
@@ -51,6 +47,8 @@ router
 router
     .route("/:projectId/n/:noteId")
     .get(
+        getNoteByIdValidator(),
+        validate,
         validateProjectPermissions(AvailableUserRole),
         getNoteById
     )
@@ -61,6 +59,8 @@ router
         updateNote
     )
     .delete(
+        deleteNoteValidator(),
+        validate,
         validateProjectPermissions([UserRolesEnum.ADMIN]),
         deleteNote
     )

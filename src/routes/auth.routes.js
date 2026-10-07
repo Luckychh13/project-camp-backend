@@ -3,13 +3,15 @@ import {registerUser,login, logoutUser, verifyEmail, refreshAccessToken, forgotP
 import {validate} from "../middlewares/validator.middleware.js"
 import {userRegisterValidator,userLoginValidator, userForgotPasswordValidator, userResetForgotPasswordValidator, userChangeCurrentPasswordValidator} from "../validators/index.js"
 import { verifyJWT} from "../middlewares/auth.middleware.js"
+import { authRateLimiter } from "../middlewares/rate-limit.middleware.js"
+
 const router=Router()
 //unsecured routes
-router.route("/register").post(userRegisterValidator(),validate,registerUser);
-router.route("/login").post(userLoginValidator(),validate,login);
+router.route("/register").post(authRateLimiter,userRegisterValidator(),validate,registerUser);
+router.route("/login").post(authRateLimiter,userLoginValidator(),validate,login);
 router.route("/verify-email/:verificationToken").get(verifyEmail);
-router.route("/refresh-token").post(refreshAccessToken);
-router.route("/forgot-password").post(userForgotPasswordValidator(),validate,forgotPassword);
+router.route("/refresh-token").post(authRateLimiter,refreshAccessToken);
+router.route("/forgot-password").post(authRateLimiter,userForgotPasswordValidator(),validate,forgotPassword);
 router.route("/reset-password/:resetToken").post(userResetForgotPasswordValidator(),validate,resetForgotPassword);
 
 //Secure Routes
