@@ -393,7 +393,7 @@ const updateTask = asyncHandler(async (req, res) => {
         },
         updateOperation,
         {
-            new: true
+            returnDocument: "after"
         }
     ).populate("assignedTo", "username avatar fullName")
 
@@ -659,7 +659,7 @@ const updateSubTask = asyncHandler(async (req, res) => {
             $set: updateFields
         },
         {
-            new: true
+            returnDocument: "after"
         }
     )
 

@@ -5,6 +5,9 @@ import swaggerUi from "swagger-ui-express"
 import fs from "fs"
 import helmet from "helmet"
 import { apiRateLimiter } from "./middlewares/rate-limit.middleware.js"
+import pinoHttp from "pino-http"
+import { randomUUID } from "crypto"
+import { logger } from "./utils/logger.js"
 
 const app = express()
 //basic configutrations
@@ -12,6 +15,46 @@ app.use(express.json({ limit: "16kb" }))
 app.use(express.urlencoded({ extended: true, limit: "16kb" }))
 app.use(express.static("public"))
 app.use(cookieParser())
+
+const sanitizeUrl = (url = "") => {
+    return url
+        .split("?")[0]
+        .replace(/(\/verify-email\/)[^/]+/i, "$1[REDACTED]")
+        .replace(/(\/reset-password\/)[^/]+/i, "$1[REDACTED]")
+}
+
+const httpLogger = pinoHttp({
+    logger,
+
+    genReqId: (req, res) => {
+        const requestId = randomUUID()
+
+        res.setHeader("X-Request-Id", requestId)
+
+        return requestId
+    },
+
+    wrapSerializers: false,
+
+    serializers: {
+        req(req) {
+            return {
+                id: req.id,
+                method: req.method,
+                url: sanitizeUrl(req.originalUrl || req.url),
+                remoteAddress: req.socket?.remoteAddress
+            }
+        },
+
+        res(res) {
+            return {
+                statusCode: res.statusCode
+            }
+        }
+    }
+})
+
+app.use(httpLogger)
 
 //cors configurations
 app.use(cors({
@@ -22,7 +65,7 @@ app.use(cors({
 }))
 const isProduction = process.env.NODE_ENV === "production"
 app.use(helmet({
-    hsts:isProduction
+    hsts: isProduction
 }))
 
 //Global rate-limiter
@@ -36,7 +79,7 @@ import taskRouter from "./routes/task.routes.js"
 import notesRouter from "./routes/notes.routes.js"
 
 const swaggerDoc = JSON.parse(
-    fs.readFileSync("./swagger-output.json","utf-8")
+    fs.readFileSync("./swagger-output.json", "utf-8")
 )
 
 app.use("/api/v1/healthcheck", healthCheckRouter);
@@ -44,7 +87,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/projects", projectRouter)
 app.use("/api/v1/tasks", taskRouter)
 app.use("/api/v1/notes", notesRouter)
-app.use("/api-docs", swaggerUi.serve,swaggerUi.setup(swaggerDoc))
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc))
 app.get("/", (req, res) => {
     res.send("hello world!");
 });

@@ -1,4 +1,4 @@
-import request, { agent } from "supertest"
+import request from "supertest"
 import app from "../src/app.js"
 import mongoose from "mongoose";
 import "dotenv/config";
