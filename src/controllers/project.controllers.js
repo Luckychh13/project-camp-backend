@@ -248,7 +248,7 @@ const updateProject = asyncHandler(async (req, res) => {
             name,
             description,
         },
-        { new: true },
+        { returnDocument: "after" },
     );
 
     if (!project) {
@@ -412,7 +412,7 @@ const addMembersToProject = asyncHandler(async (req, res) => {
             role: role
         },
         {
-            new: true,
+            returnDocument: "after",
             upsert: true
         })
 
@@ -580,7 +580,7 @@ const updateMemberRole = asyncHandler(async (req, res) => {
             role: newRole,
         },
         {
-            new: true
+            returnDocument: "after"
         }
     )
     if (!projectMember) {

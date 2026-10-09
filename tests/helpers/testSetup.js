@@ -111,7 +111,7 @@ export const setTestProjectRole = async ({
             }
         },
         {
-            new: true
+            returnDocument: "after"
         }
     )
 
