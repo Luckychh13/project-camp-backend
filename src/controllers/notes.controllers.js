@@ -19,7 +19,7 @@ const getNotes = asyncHandler(async (req, res) => {
     }
 
     #swagger.responses[400] = {
-        description: 'Invalid project ID or user is not a member of the project',
+        description: 'Invalid project ID',
         schema: {
             $ref: '#/components/schemas/ErrorResponse'
         }
@@ -88,7 +88,7 @@ const createNote = asyncHandler(async (req, res) => {
     }
 
     #swagger.responses[400] = {
-        description: 'Invalid project ID or user is not a member of the project',
+        description:'Invalid project ID',
         schema: {
             $ref: '#/components/schemas/ErrorResponse'
         }
@@ -156,7 +156,7 @@ const getNoteById = asyncHandler(async (req, res) => {
     }
 
     #swagger.responses[400] = {
-        description: 'Invalid project ID or user is not a member of the project',
+        description: 'Invalid project ID',
         schema: {
             $ref: '#/components/schemas/ErrorResponse'
         }
@@ -237,7 +237,7 @@ const updateNote = asyncHandler(async (req, res) => {
     }
 
     #swagger.responses[400] = {
-        description: 'Invalid project ID or user is not a member of the project',
+        description: 'Invalid project ID',
         schema: {
             $ref: '#/components/schemas/ErrorResponse'
         }
@@ -311,7 +311,7 @@ const deleteNote = asyncHandler(async (req, res) => {
     }
 
     #swagger.responses[400] = {
-        description: 'Invalid project ID or user is not a member of the project',
+        description: 'Invalid project ID',
         schema: {
             $ref: '#/components/schemas/ErrorResponse'
         }

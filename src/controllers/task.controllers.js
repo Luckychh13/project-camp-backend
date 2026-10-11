@@ -517,7 +517,7 @@ const createSubTask = asyncHandler(async (req, res) => {
         }
     
         #swagger.responses[400] = {
-            description: 'Invalid project ID or user is not a member of the project',
+            description: 'Invalid project ID',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
@@ -643,14 +643,39 @@ const updateSubTask = asyncHandler(async (req, res) => {
 
     const subTask = await SubTask.findById(subTaskId).populate("task")
 
-    if (!subTask || subTask.task.project.toString() !== projectId) {
+    if (
+        !subTask ||
+        !subTask.task ||
+        subTask.task.project.toString() !== projectId
+    ) {
         throw new ApiError(404, "SubTask not found")
     }
 
-    const updateFields = { isCompleted }
+    if (
+        req.projectMemberRole === UserRolesEnum.MEMBER &&
+        title !== undefined
+    ) {
+        throw new ApiError(
+            403,
+            "Members can only update subtask completion status"
+        )
+    }
 
-    if (req.user.role !== UserRolesEnum.MEMBER) {
+    if (title === undefined && isCompleted === undefined) {
+        throw new ApiError(
+            400,
+            "At least one field is required to update subtask"
+        )
+    }
+
+    const updateFields = {}
+
+    if (title !== undefined) {
         updateFields.title = title
+    }
+
+    if (isCompleted !== undefined) {
+        updateFields.isCompleted = isCompleted
     }
 
     const updatedSubTask = await SubTask.findByIdAndUpdate(
@@ -659,7 +684,8 @@ const updateSubTask = asyncHandler(async (req, res) => {
             $set: updateFields
         },
         {
-            returnDocument: "after"
+            returnDocument: "after",
+            runValidators: true
         }
     )
 
@@ -717,7 +743,7 @@ const deleteSubTask = asyncHandler(async (req, res) => {
 
     const subTask = await SubTask.findById(subTaskId).populate("task")
 
-    if (!subTask || subTask.task.project.toString() !== projectId) {
+    if (!subTask || !subTask.task || subTask.task.project.toString() !== projectId) {
         throw new ApiError(404, "SubTask not found")
     }
 

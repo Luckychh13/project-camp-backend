@@ -1299,6 +1299,21 @@
           }
         ],
         "responses": {
+          "200": {
+            "description": "Existing project member role updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddProjectMemberResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddProjectMemberResponse"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Project member added successfully",
             "content": {
@@ -1375,7 +1390,7 @@
             }
           },
           "409": {
-            "description": "User is already a member of the project",
+            "description": "Conflict: the project must retain at least one admin",
             "content": {
               "application/json": {
                 "schema": {
@@ -1522,6 +1537,21 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Cannot demote the last project admin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1581,7 +1611,7 @@
             }
           },
           "400": {
-            "description": "Project member not found",
+            "description": "Invalid project ID",
             "content": {
               "application/json": {
                 "schema": {
@@ -1612,6 +1642,21 @@
           },
           "403": {
             "description": "User does not have permission to remove project members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project member not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2802,6 +2847,21 @@
               }
             }
           },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal server error caused by an invalid note ID format",
             "content": {
@@ -3052,6 +3112,21 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
