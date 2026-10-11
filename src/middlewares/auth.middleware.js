@@ -14,17 +14,26 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         throw new ApiError(401, "Unauthorized request")
     }
 
+    let decodedToken
+
     try {
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-        const user = await User.findById(decodedToken?._id).select("-password -refreshToken -emailVerificationToken -emailVerificationExpire")
-        if (!user) {
-            throw new ApiError(401, "Invalid access token")
-        }
-        req.user = user;
-        next()
+        decodedToken = jwt.verify(
+            token,
+            process.env.ACCESS_TOKEN_SECRET
+        )
     } catch (error) {
         throw new ApiError(401, "Invalid access token")
     }
+
+    const user = await User.findById(decodedToken?._id)
+        .select("-password -refreshToken -emailVerificationToken -emailVerificationExpire")
+
+    if (!user) {
+        throw new ApiError(401, "Invalid access token")
+    }
+
+    req.user = user
+    next()
 })
 
 export const validateProjectPermissions = (roles = []) => {
@@ -49,12 +58,12 @@ export const validateProjectPermissions = (roles = []) => {
             user: new mongoose.Types.ObjectId(req.user._id)
         })
         if (!projectMember) {
-            throw new ApiError(400, "You are not a member of this project")
+            throw new ApiError(403, "You are not a member of this project")
         }
 
         const givenRole = projectMember?.role
 
-        req.user.role = givenRole
+        req.projectMemberRole = givenRole
 
         if (!roles.includes(givenRole)) {
             throw new ApiError(403, "You do not have permission to perform this action")

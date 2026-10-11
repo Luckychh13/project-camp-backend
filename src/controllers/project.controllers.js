@@ -4,7 +4,7 @@ import { ProjectMember } from "../models/projectmembers.models.js"
 import { ApiResponse } from "../utils/api-response.js"
 import { ApiError } from "../utils/api-error.js"
 import { asyncHandler } from "../utils/async-handler.js"
-import mongoose, { Mongoose } from "mongoose"
+import mongoose from "mongoose"
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js"
 
 
@@ -342,6 +342,13 @@ const addMembersToProject = asyncHandler(async (req, res) => {
             }
         }
 
+        #swagger.responses[200] = {
+            description: 'Existing project member role updated successfully',
+            schema: {
+                $ref: '#/components/schemas/AddProjectMemberResponse'
+            }
+        }
+
         #swagger.responses[201] = {
             description: 'Project member added successfully',
             schema: {
@@ -350,7 +357,7 @@ const addMembersToProject = asyncHandler(async (req, res) => {
         }
 
         #swagger.responses[400] = {
-            description: 'Invalid project ID or invalid project/member data',
+            description: 'Invalid project ID',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
@@ -378,7 +385,7 @@ const addMembersToProject = asyncHandler(async (req, res) => {
         }
 
         #swagger.responses[409] = {
-            description: 'User is already a member of the project',
+            description: 'Conflict: the project must retain at least one admin',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
@@ -402,6 +409,29 @@ const addMembersToProject = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User doesnot exits")
     }
 
+    const existingMembership = await ProjectMember.findOne({
+        user: new mongoose.Types.ObjectId(user._id),
+        project: new mongoose.Types.ObjectId(projectId)
+    })
+
+    if (
+        existingMembership?.role === UserRolesEnum.ADMIN &&
+        role !== UserRolesEnum.ADMIN
+    ) {
+        const otherAdminCount = await ProjectMember.countDocuments({
+            project: new mongoose.Types.ObjectId(projectId),
+            role: UserRolesEnum.ADMIN,
+            _id: { $ne: existingMembership._id }
+        })
+
+        if (otherAdminCount === 0) {
+            throw new ApiError(
+                409,
+                "A project must have at least one admin"
+            )
+        }
+    }
+
     await ProjectMember.findOneAndUpdate({
         user: new mongoose.Types.ObjectId(user._id),
         project: new mongoose.Types.ObjectId(projectId)
@@ -416,9 +446,16 @@ const addMembersToProject = asyncHandler(async (req, res) => {
             upsert: true
         })
 
+    const statusCode = existingMembership ? 200 : 201
+
+    const message = existingMembership
+        ? "Project member role updated successfully"
+        : "Added project member role"
+
     return res
-        .status(201)
-        .json(new ApiResponse(201, {}, "Added project member role"))
+        .status(statusCode)
+        .json(new ApiResponse(statusCode, {}, message))
+
 })
 
 const getProjectMembers = asyncHandler(async (req, res) => {
@@ -559,9 +596,20 @@ const updateMemberRole = asyncHandler(async (req, res) => {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
+
+        #swagger.responses[409] = {
+            description: 'Cannot demote the last project admin',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
     */
     const { projectId, userId } = req.params
     const { newRole } = req.body
+    if (!mongoose.isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid user ID")
+    }
+
     if (!AvailableUserRole.includes(newRole)) {
         throw new ApiError(400, "Invalid role")
     }
@@ -571,7 +619,25 @@ const updateMemberRole = asyncHandler(async (req, res) => {
         user: new mongoose.Types.ObjectId(userId)
     })
     if (!projectMember) {
-        throw new ApiError(400, "Project member not found")
+        throw new ApiError(404, "Project member not found")
+    }
+
+    if (
+        projectMember.role === UserRolesEnum.ADMIN &&
+        newRole !== UserRolesEnum.ADMIN
+    ) {
+        const otherAdminCount = await ProjectMember.countDocuments({
+            project: new mongoose.Types.ObjectId(projectId),
+            role: UserRolesEnum.ADMIN,
+            _id: { $ne: projectMember._id }
+        })
+
+        if (otherAdminCount === 0) {
+            throw new ApiError(
+                409,
+                "A project must have at least one admin"
+            )
+        }
     }
 
     projectMember = await ProjectMember.findByIdAndUpdate(
@@ -610,7 +676,7 @@ const deleteMember = asyncHandler(async (req, res) => {
         }
 
         #swagger.responses[400] = {
-            description: 'Project member not found',
+            description: 'Invalid project ID',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
@@ -629,8 +695,18 @@ const deleteMember = asyncHandler(async (req, res) => {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
+
+        #swagger.responses[404] = {
+            description: 'Project member not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
     */
     const { projectId, userId } = req.params
+    if (!mongoose.isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid user ID")
+    }
 
     let projectMember = await ProjectMember.findOne({
         project: new mongoose.Types.ObjectId(projectId),
@@ -640,9 +716,24 @@ const deleteMember = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Project member not found")
     }
 
+    if (projectMember.role === UserRolesEnum.ADMIN) {
+        const otherAdminCount = await ProjectMember.countDocuments({
+            project: new mongoose.Types.ObjectId(projectId),
+            role: UserRolesEnum.ADMIN,
+            _id: { $ne: projectMember._id }
+        })
+
+        if (otherAdminCount === 0) {
+            throw new ApiError(
+                409,
+                "A project must have at least one admin"
+            )
+        }
+    }
+
     projectMember = await ProjectMember.findByIdAndDelete(projectMember._id)
     if (!projectMember) {
-        throw new ApiError(400, "Project member not found")
+        throw new ApiError(404, "Project member not found")
     }
 
     return res

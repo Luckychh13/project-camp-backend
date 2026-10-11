@@ -192,7 +192,7 @@ describe("Project API", () => {
                     `/api/v1/projects/${ownerData.project._id}`
                 )
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"
@@ -571,7 +571,7 @@ describe("Project API", () => {
                     newRole: UserRolesEnum.PROJECT_ADMIN
                 })
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(404)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "Project member not found"
@@ -687,7 +687,7 @@ describe("Project API", () => {
                     `/api/v1/projects/${ownerData.project._id}/members`
                 )
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"
@@ -819,7 +819,7 @@ describe("Project API", () => {
                     role: UserRolesEnum.PROJECT_ADMIN
                 })
 
-            expect(response.statusCode).toBe(201)
+            expect(response.statusCode).toBe(200)
             expect(response.body.success).toBe(true)
 
             const members = await ProjectMember.find({
@@ -836,4 +836,209 @@ describe("Project API", () => {
             await cleanupTestData(memberData)
         }
     }, 15000)
+
+    test("should reject demoting the last project admin", async () => {
+        const ownerData = await createTestSetup()
+
+        try {
+            const response = await ownerData.agent
+                .put(
+                    `/api/v1/projects/${ownerData.project._id}/members/${ownerData.user._id}`
+                )
+                .send({
+                    newRole: UserRolesEnum.MEMBER
+                })
+
+            expect(response.statusCode).toBe(409)
+            expect(response.body.message).toBe(
+                "A project must have at least one admin"
+            )
+
+            const membership = await ProjectMember.findOne({
+                project: ownerData.project._id,
+                user: ownerData.user._id
+            })
+
+            expect(membership.role).toBe(UserRolesEnum.ADMIN)
+        } finally {
+            await cleanupTestData(ownerData)
+        }
+    }, 15000)
+
+    test("should reject deleting the last project admin", async () => {
+        const ownerData = await createTestSetup()
+
+        try {
+            const response = await ownerData.agent
+                .delete(
+                    `/api/v1/projects/${ownerData.project._id}/members/${ownerData.user._id}`
+                )
+
+            expect(response.statusCode).toBe(409)
+            expect(response.body.message).toBe(
+                "A project must have at least one admin"
+            )
+
+            const membership = await ProjectMember.findOne({
+                project: ownerData.project._id,
+                user: ownerData.user._id
+            })
+
+            expect(membership).not.toBeNull()
+            expect(membership.role).toBe(UserRolesEnum.ADMIN)
+        } finally {
+            await cleanupTestData(ownerData)
+        }
+    }, 15000)
+
+    test("should reject demoting the last admin through add-member endpoint", async () => {
+        const ownerData = await createTestSetup()
+
+        try {
+            const response = await ownerData.agent
+                .post(
+                    `/api/v1/projects/${ownerData.project._id}/members`
+                )
+                .send({
+                    email: ownerData.user.email,
+                    role: UserRolesEnum.MEMBER
+                })
+
+            expect(response.statusCode).toBe(409)
+            expect(response.body.message).toBe(
+                "A project must have at least one admin"
+            )
+
+            const membership = await ProjectMember.findOne({
+                project: ownerData.project._id,
+                user: ownerData.user._id
+            })
+
+            expect(membership.role).toBe(UserRolesEnum.ADMIN)
+        } finally {
+            await cleanupTestData(ownerData)
+        }
+    }, 15000)
+
+    test("should allow demoting an admin when another admin exists", async () => {
+        const ownerData = await createTestSetup()
+        const secondAdmin = await createTestAuthSetup()
+
+        try {
+            await ProjectMember.create({
+                user: secondAdmin.user._id,
+                project: ownerData.project._id,
+                role: UserRolesEnum.ADMIN
+            })
+
+            const response = await ownerData.agent
+                .put(
+                    `/api/v1/projects/${ownerData.project._id}/members/${secondAdmin.user._id}`
+                )
+                .send({
+                    newRole: UserRolesEnum.MEMBER
+                })
+
+            expect(response.statusCode).toBe(200)
+
+            const updatedMembership = await ProjectMember.findOne({
+                user: secondAdmin.user._id,
+                project: ownerData.project._id
+            })
+
+            expect(updatedMembership.role).toBe(UserRolesEnum.MEMBER)
+
+            const remainingAdmin = await ProjectMember.findOne({
+                user: ownerData.user._id,
+                project: ownerData.project._id
+            })
+
+            expect(remainingAdmin.role).toBe(UserRolesEnum.ADMIN)
+        } finally {
+            await cleanupTestData(ownerData)
+            await cleanupTestData(secondAdmin)
+        }
+    }, 15000)
+
+    test("should allow deleting an admin when another admin exists", async () => {
+        const ownerData = await createTestSetup()
+        const secondAdmin = await createTestAuthSetup()
+
+        try {
+            await ProjectMember.create({
+                user: secondAdmin.user._id,
+                project: ownerData.project._id,
+                role: UserRolesEnum.ADMIN
+            })
+
+            const response = await ownerData.agent
+                .delete(
+                    `/api/v1/projects/${ownerData.project._id}/members/${secondAdmin.user._id}`
+                )
+
+            expect(response.statusCode).toBe(200)
+
+            const deletedMembership = await ProjectMember.findOne({
+                user: secondAdmin.user._id,
+                project: ownerData.project._id
+            })
+
+            expect(deletedMembership).toBeNull()
+
+            const remainingAdmin = await ProjectMember.findOne({
+                user: ownerData.user._id,
+                project: ownerData.project._id
+            })
+
+            expect(remainingAdmin.role).toBe(UserRolesEnum.ADMIN)
+        } finally {
+            await cleanupTestData(ownerData)
+            await cleanupTestData(secondAdmin)
+        }
+    }, 15000)
+
+    test("should allow demoting an admin through add-member endpoint when another admin exists", async () => {
+        const ownerData = await createTestSetup()
+        const secondAdmin = await createTestAuthSetup()
+
+        try {
+            await ProjectMember.create({
+                user: secondAdmin.user._id,
+                project: ownerData.project._id,
+                role: UserRolesEnum.ADMIN
+            })
+
+            const response = await ownerData.agent
+                .post(
+                    `/api/v1/projects/${ownerData.project._id}/members`
+                )
+                .send({
+                    email: ownerData.user.email,
+                    role: UserRolesEnum.MEMBER
+                })
+
+            expect(response.statusCode).toBe(200)
+            expect(response.body.success).toBe(true)
+
+            const updatedOwnerMembership = await ProjectMember.findOne({
+                user: ownerData.user._id,
+                project: ownerData.project._id
+            })
+
+            expect(updatedOwnerMembership.role).toBe(
+                UserRolesEnum.MEMBER
+            )
+
+            const remainingAdmin = await ProjectMember.findOne({
+                user: secondAdmin.user._id,
+                project: ownerData.project._id
+            })
+
+            expect(remainingAdmin.role).toBe(UserRolesEnum.ADMIN)
+        } finally {
+            await cleanupTestData(ownerData)
+            await cleanupTestData(secondAdmin)
+        }
+    }, 15000)
+    
 })

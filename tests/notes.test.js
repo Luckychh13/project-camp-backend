@@ -182,7 +182,7 @@ describe("Notes API", () => {
                     content: "Non member should not create note"
                 })
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"
@@ -357,7 +357,7 @@ describe("Notes API", () => {
             const response = await nonMemberData.agent
                 .get(`/api/v1/notes/${ownerData.project._id}`)
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"
@@ -542,7 +542,7 @@ describe("Notes API", () => {
                     content: "Changed content"
                 })
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"
@@ -713,7 +713,7 @@ describe("Notes API", () => {
                     `/api/v1/notes/${ownerData.project._id}/n/${note._id}`
                 )
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"

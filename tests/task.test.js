@@ -240,7 +240,7 @@ describe("Task API", () => {
                     title: "Non Member Task"
                 })
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"
@@ -351,7 +351,7 @@ describe("Task API", () => {
                     `/api/v1/tasks/${ownerData.project._id}`
                 )
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"
@@ -458,7 +458,7 @@ describe("Task API", () => {
                     `/api/v1/tasks/${ownerData.project._id}/t/${task._id}`
                 )
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"
@@ -720,7 +720,7 @@ describe("Task API", () => {
                     title: "Changed"
                 })
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"
@@ -1197,25 +1197,18 @@ describe("Task API", () => {
                     isCompleted: true
                 })
 
-            expect(response.statusCode).toBe(200)
-            expect(response.body.success).toBe(true)
+            expect(response.statusCode).toBe(403)
+            expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
-                "SubTask updated successfully"
+                "Members can only update subtask completion status"
             )
-
-            expect(response.body.data.title).toBe(
-                "Original SubTask"
-            )
-            expect(response.body.data.isCompleted).toBe(true)
 
             const updatedSubTask = await SubTask.findById(
                 subTask._id
             )
 
-            expect(updatedSubTask.title).toBe(
-                "Original SubTask"
-            )
-            expect(updatedSubTask.isCompleted).toBe(true)
+            expect(updatedSubTask.title).toBe("Original SubTask")
+            expect(updatedSubTask.isCompleted).toBe(false)
         } finally {
             await cleanupTestData(ownerData)
             await cleanupTestData(memberData)
@@ -1282,7 +1275,7 @@ describe("Task API", () => {
                     isCompleted: true
                 })
 
-            expect(response.statusCode).toBe(400)
+            expect(response.statusCode).toBe(403)
             expect(response.body.success).toBe(false)
             expect(response.body.message).toBe(
                 "You are not a member of this project"
