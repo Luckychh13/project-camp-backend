@@ -19,7 +19,7 @@ const parsePositiveInteger = (value, name, defaultValue) => {
     if (!Number.isSafeInteger(parsedValue) || parsedValue < 1) {
         throw new ApiError(400, `${name} must be a positive integer`)
     }
-    
+
     return parsedValue
 }
 
