@@ -810,6 +810,90 @@
         ],
         "summary": "Get user projects",
         "description": "",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number, starting from 1. Defaults to 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of projects per page. Maximum is 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "example": 10
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Field used to sort projects.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "createdAt",
+              "example": "name",
+              "enum": [
+                "name",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort direction.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "desc",
+              "example": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "Filter projects by the current user’s project role.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "member",
+              "enum": [
+                "admin",
+                "project_admin",
+                "member"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Optional case-insensitive partial search. Maximum length: 100 characters.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "example": "backend"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Projects fetched successfully",
@@ -822,6 +906,36 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/ProjectsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination, sorting, or role filter parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1212,6 +1326,88 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number, starting from 1. Defaults to 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of members per page. Maximum is 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "example": 10
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Field used to sort project members.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "createdAt",
+              "example": "role",
+              "enum": [
+                "role",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort direction.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "desc",
+              "example": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "Filter project members by role.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "member",
+              "enum": [
+                "admin",
+                "project_admin",
+                "member"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Optional case-insensitive partial search across member username and full name.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "example": "rahul"
+            }
           }
         ],
         "responses": {
@@ -1330,7 +1526,7 @@
             }
           },
           "400": {
-            "description": "Invalid project ID or invalid project/member data",
+            "description": "Invalid project ID",
             "content": {
               "application/json": {
                 "schema": {
@@ -1693,6 +1889,89 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number, starting from 1. Defaults to 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of tasks per page. Defaults to 10; maximum is 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "example": 10
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Field used to sort tasks.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "createdAt",
+              "example": "createdAt",
+              "enum": [
+                "title",
+                "status",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort direction. Defaults to descending.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "desc",
+              "example": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter tasks by status.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "todo",
+              "enum": [
+                "todo",
+                "in_progress",
+                "done"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Optional case-insensitive partial search. Maximum length: 100 characters.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "example": "backend"
+            }
           }
         ],
         "responses": {
@@ -1707,6 +1986,21 @@
               "application/xml": {
                 "schema": {
                   "$ref": "#/components/schemas/TasksResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination, sorting, or task status parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -2188,7 +2482,7 @@
             }
           },
           "400": {
-            "description": "Invalid project ID or user is not a member of the project",
+            "description": "Invalid project ID",
             "content": {
               "application/json": {
                 "schema": {
@@ -2536,6 +2830,84 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number, starting from 1. Defaults to 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of notes per page. Maximum is 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "example": 10
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Field used to sort notes.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "createdAt",
+              "example": "title",
+              "enum": [
+                "title",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort direction.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "desc",
+              "example": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "createdBy",
+            "in": "query",
+            "description": "Filter notes by creator user ID.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{24}$",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Optional case-insensitive partial search. Maximum length: 100 characters.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "example": "backend"
+            }
           }
         ],
         "responses": {
@@ -2555,7 +2927,7 @@
             }
           },
           "400": {
-            "description": "Invalid project ID or user is not a member of the project",
+            "description": "Invalid project ID",
             "content": {
               "application/json": {
                 "schema": {
@@ -2654,7 +3026,7 @@
             }
           },
           "400": {
-            "description": "Invalid project ID or user is not a member of the project",
+            "description": "Invalid project ID",
             "content": {
               "application/json": {
                 "schema": {
@@ -2788,7 +3160,7 @@
             }
           },
           "400": {
-            "description": "Invalid project ID or user is not a member of the project",
+            "description": "Invalid project ID",
             "content": {
               "application/json": {
                 "schema": {
@@ -2925,7 +3297,7 @@
             }
           },
           "400": {
-            "description": "Invalid project ID or user is not a member of the project",
+            "description": "Invalid project ID",
             "content": {
               "application/json": {
                 "schema": {
@@ -3057,7 +3429,7 @@
             }
           },
           "400": {
-            "description": "Invalid project ID or user is not a member of the project",
+            "description": "Invalid project ID",
             "content": {
               "application/json": {
                 "schema": {
@@ -3316,41 +3688,6 @@
         },
         "xml": {
           "name": "NoteResponse"
-        }
-      },
-      "NotesResponse": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "example": 200
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "example": "array"
-              },
-              "items": {
-                "xml": {
-                  "name": "note"
-                },
-                "$ref": "#/components/schemas/Note"
-              }
-            }
-          },
-          "message": {
-            "type": "string",
-            "example": "Notes fetched successfully"
-          },
-          "success": {
-            "type": "boolean",
-            "example": true
-          }
-        },
-        "xml": {
-          "name": "NotesResponse"
         }
       },
       "CreateNoteResponse": {
@@ -4025,41 +4362,6 @@
           "name": "ProjectResponse"
         }
       },
-      "ProjectsResponse": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "example": 200
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "example": "array"
-              },
-              "items": {
-                "xml": {
-                  "name": "projectlistitem"
-                },
-                "$ref": "#/components/schemas/ProjectListItem"
-              }
-            }
-          },
-          "message": {
-            "type": "string",
-            "example": "Projects fetched successfully"
-          },
-          "success": {
-            "type": "boolean",
-            "example": true
-          }
-        },
-        "xml": {
-          "name": "ProjectsResponse"
-        }
-      },
       "CreateProjectResponse": {
         "type": "object",
         "properties": {
@@ -4261,41 +4563,6 @@
         },
         "xml": {
           "name": "ProjectMemberResponse"
-        }
-      },
-      "ProjectMembersResponse": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "example": 200
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "example": "array"
-              },
-              "items": {
-                "xml": {
-                  "name": "projectmember"
-                },
-                "$ref": "#/components/schemas/ProjectMember"
-              }
-            }
-          },
-          "message": {
-            "type": "string",
-            "example": "Project members fetched"
-          },
-          "success": {
-            "type": "boolean",
-            "example": true
-          }
-        },
-        "xml": {
-          "name": "ProjectMembersResponse"
         }
       },
       "UpdateProjectMemberResponse": {
@@ -4545,41 +4812,6 @@
         ],
         "xml": {
           "name": "TaskListItem"
-        }
-      },
-      "TasksResponse": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "example": 200
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "example": "array"
-              },
-              "items": {
-                "xml": {
-                  "name": "tasklistitem"
-                },
-                "$ref": "#/components/schemas/TaskListItem"
-              }
-            }
-          },
-          "message": {
-            "type": "string",
-            "example": "Task fetched successfully"
-          },
-          "success": {
-            "type": "boolean",
-            "example": true
-          }
-        },
-        "xml": {
-          "name": "TasksResponse"
         }
       },
       "CreateTaskResponse": {
@@ -5020,6 +5252,286 @@
               "type": "string",
               "format": "binary"
             }
+          }
+        }
+      },
+      "TaskPagination": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "totalTasks": {
+            "type": "integer",
+            "example": 23
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "example": true
+          },
+          "nextPage": {
+            "type": "integer",
+            "nullable": true,
+            "example": 2
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "example": true
+          },
+          "previousPage": {
+            "type": "integer",
+            "nullable": true,
+            "example": 1
+          }
+        }
+      },
+      "TasksResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "tasks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TaskListItem"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/TaskPagination"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Tasks fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "NotePagination": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "totalNotes": {
+            "type": "integer",
+            "example": 15
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 2
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "example": true
+          },
+          "nextPage": {
+            "type": "integer",
+            "nullable": true,
+            "example": 2
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "example": false
+          },
+          "previousPage": {
+            "type": "integer",
+            "nullable": true,
+            "example": null
+          }
+        }
+      },
+      "NotesResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "notes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/NotePagination"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Notes fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "ProjectsPagination": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "totalProjects": {
+            "type": "integer",
+            "example": 8
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 1
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "example": false
+          },
+          "nextPage": {
+            "type": "integer",
+            "nullable": true,
+            "example": null
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "example": false
+          },
+          "previousPage": {
+            "type": "integer",
+            "nullable": true,
+            "example": null
+          }
+        }
+      },
+      "ProjectsResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "projects": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectListItem"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/ProjectsPagination"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Projects fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "ProjectMembersPagination": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 10
+          },
+          "totalMembers": {
+            "type": "integer",
+            "example": 18
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 2
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "example": false
+          },
+          "nextPage": {
+            "type": "integer",
+            "nullable": true,
+            "example": null
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "example": true
+          },
+          "previousPage": {
+            "type": "integer",
+            "nullable": true,
+            "example": 1
+          }
+        }
+      },
+      "ProjectMembersResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 200
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "members": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectMember"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/ProjectMembersPagination"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": "Project members fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
           }
         }
       }

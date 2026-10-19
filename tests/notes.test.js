@@ -278,26 +278,37 @@ describe("Notes API", () => {
             const response = await testData.agent
                 .get(`/api/v1/notes/${testData.project._id}`)
 
+            console.log("GET NOTES RESPONSE:", response.body);
+
             expect(response.statusCode).toBe(200)
             expect(response.body.success).toBe(true)
             expect(response.body.message).toBe(
                 "Notes fetched successfully"
             )
 
-            expect(response.body.data).toBeDefined()
-            expect(response.body.data.length).toBe(2)
+            const { notes, pagination } = response.body.data;
+
+            expect(Array.isArray(notes)).toBe(true);
+            expect(notes).toHaveLength(2);
 
             expect(
-                response.body.data.some(
-                    note => note.title === "First Note"
-                )
-            ).toBe(true)
+                notes.some(note => note.title === "First Note")
+            ).toBe(true);
 
             expect(
-                response.body.data.some(
-                    note => note.title === "Second Note"
-                )
-            ).toBe(true)
+                notes.some(note => note.title === "Second Note")
+            ).toBe(true);
+
+            expect(pagination).toEqual({
+                currentPage: 1,
+                limit: 10,
+                totalNotes: 2,
+                totalPages: 1,
+                hasNextPage: false,
+                nextPage: null,
+                hasPreviousPage: false,
+                previousPage: null,
+            });
 
         } finally {
             await Note.deleteMany({
@@ -332,11 +343,22 @@ describe("Notes API", () => {
 
             expect(response.statusCode).toBe(200)
             expect(response.body.success).toBe(true)
-            expect(response.body.data).toBeDefined()
-            expect(response.body.data.length).toBe(1)
-            expect(response.body.data[0].title).toBe(
-                "Member Read Note"
-            )
+            const { notes, pagination } = response.body.data;
+
+            expect(Array.isArray(notes)).toBe(true);
+            expect(notes).toHaveLength(1);
+            expect(notes[0].title).toBe("Member Read Note");
+
+            expect(pagination).toMatchObject({
+                currentPage: 1,
+                limit: 10,
+                totalNotes: 1,
+                totalPages: 1,
+                hasNextPage: false,
+                nextPage: null,
+                hasPreviousPage: false,
+                previousPage: null,
+            });
 
         } finally {
             await Note.deleteMany({
@@ -793,4 +815,181 @@ describe("Notes API", () => {
         }
     }, 15000)
 
+    test("should sort notes by title in ascending order", async () => {
+        const testData = await createTestSetup();
+        let createdNotes = [];
+
+        try {
+            const prefix = `sort-${Date.now()}`;
+
+            const titles = [
+                `${prefix}-C`,
+                `${prefix}-A`,
+                `${prefix}-B`,
+            ];
+
+            createdNotes = await Note.create(
+                titles.map((title) => ({
+                    title,
+                    content: "Sorting integration test",
+                    project: testData.project._id,
+                    createdBy: testData.user._id,
+                }))
+            );
+
+            const response = await testData.agent.get(
+                `/api/v1/notes/${testData.project._id}?sortBy=title&order=asc&limit=100`
+            );
+
+            expect(response.statusCode).toBe(200);
+
+            const returnedTitles = response.body.data.notes
+                .map((note) => note.title)
+                .filter((title) => titles.includes(title));
+
+            expect(returnedTitles).toEqual([
+                `${prefix}-A`,
+                `${prefix}-B`,
+                `${prefix}-C`,
+            ]);
+        } finally {
+            if (createdNotes.length > 0) {
+                await Note.deleteMany({
+                    _id: { $in: createdNotes.map((note) => note._id) },
+                });
+            }
+
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should reject unsupported note sort fields", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const response = await testData.agent.get(
+                `/api/v1/notes/${testData.project._id}?sortBy=password&order=desc`
+            );
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe("Invalid sort field");
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should filter notes by creator", async () => {
+        const ownerData = await createTestSetup();
+        const otherUserData = await createTestAuthSetup();
+        let createdNotes = [];
+
+        try {
+            const prefix = `filter-${Date.now()}`;
+
+            createdNotes = await Note.create([
+                {
+                    title: `${prefix}-OWNER`,
+                    content: "Created by project owner",
+                    project: ownerData.project._id,
+                    createdBy: ownerData.user._id,
+                },
+                {
+                    title: `${prefix}-OTHER`,
+                    content: "Created by another user",
+                    project: ownerData.project._id,
+                    createdBy: otherUserData.user._id,
+                },
+            ]);
+
+            const response = await ownerData.agent.get(
+                `/api/v1/notes/${ownerData.project._id}?createdBy=${ownerData.user._id}`
+            );
+            expect(response.statusCode).toBe(200);
+
+            const { notes, pagination } = response.body.data;
+
+            const filteredNotes = notes.filter((note) =>
+                note.title.startsWith(prefix)
+            );
+
+            expect(filteredNotes).toHaveLength(1);
+            expect(filteredNotes[0].title).toBe(`${prefix}-OWNER`);
+            expect(pagination.totalNotes).toBe(1);
+        } finally {
+            if (createdNotes.length > 0) {
+                await Note.deleteMany({
+                    _id: {
+                        $in: createdNotes.map((note) => note._id),
+                    },
+                });
+            }
+
+            await cleanupTestData(ownerData);
+            await cleanupTestData(otherUserData);
+        }
+    }, 15000);
+
+    test("should reject an invalid note creator ID", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const response = await testData.agent.get(
+                `/api/v1/notes/${testData.project._id}?createdBy=invalid-id`
+            );
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe("Invalid note creator ID");
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should search notes by title and content", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const titleMatch = await testData.agent
+                .post(`/api/v1/notes/${testData.project._id}`)
+                .send({
+                    title: "Authentication Guide",
+                    content: "Steps for setting up an account",
+                });
+
+            const contentMatch = await testData.agent
+                .post(`/api/v1/notes/${testData.project._id}`)
+                .send({
+                    title: "Email Setup",
+                    content: "Authentication verification instructions",
+                });
+
+            const unrelatedNote = await testData.agent
+                .post(`/api/v1/notes/${testData.project._id}`)
+                .send({
+                    title: "Database Guide",
+                    content: "Indexing and query optimization",
+                });
+
+            expect(titleMatch.statusCode).toBe(201);
+            expect(contentMatch.statusCode).toBe(201);
+            expect(unrelatedNote.statusCode).toBe(201);
+
+            const response = await testData.agent.get(
+                `/api/v1/notes/${testData.project._id}?search=AUTHENTICATION`
+            );
+console.log("GET NOTES RESPONSE:", response.body);
+            expect(response.statusCode).toBe(200);
+            expect(response.body.success).toBe(true);
+
+            const notes = response.body.data.notes;
+            const noteTitles = notes.map((note) => note.title);
+
+            expect(notes).toHaveLength(2);
+            expect(noteTitles).toEqual(
+                expect.arrayContaining(["Authentication Guide", "Email Setup"])
+            );
+            expect(noteTitles).not.toContain("Database Guide");
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000);
 })

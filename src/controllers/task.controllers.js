@@ -9,53 +9,180 @@ import { asyncHandler } from "../utils/async-handler.js"
 import mongoose from "mongoose"
 import fs from "fs/promises"
 import path from "path"
-import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js"
-
+import { getPaginationOptions } from "../utils/pagination.js"
+import { AvailableUserRole, UserRolesEnum, AvailableTaskStatus } from "../utils/constants.js"
+import { getSortOptions } from "../utils/sorting.js";
+import { getSearchRegex } from "../utils/search.js"
 
 const getTasks = asyncHandler(async (req, res) => {
-    /*
-        #swagger.tags = ['Tasks']
-        #swagger.summary = 'Get project tasks'
-        #swagger.security = [{ "bearerAuth": [] }]
+    // #swagger.autoQuery = false
 
-        #swagger.responses[200] = {
-            description: 'Tasks fetched successfully',
-            schema: {
-                $ref: '#/components/schemas/TasksResponse'
-            }
-        }
+/*
+    #swagger.tags = ['Tasks']
+    #swagger.summary = 'Get project tasks'
+    #swagger.security = [{ "bearerAuth": [] }]
 
-        #swagger.responses[401] = {
-            description: 'Unauthorized',
-            schema: {
-                $ref: '#/components/schemas/ErrorResponse'
-            }
+    #swagger.parameters['page'] = {
+        in: 'query',
+        description: 'Page number, starting from 1. Defaults to 1.',
+        required: false,
+        '@schema': {
+            type: 'integer',
+            minimum: 1,
+            default: 1,
+            example: 1
         }
+    }
+    #swagger.parameters['limit'] = {
+        in: 'query',
+        description: 'Number of tasks per page. Defaults to 10; maximum is 100.',
+        required: false,
+        '@schema': {
+            type: 'integer',
+            minimum: 1,
+            maximum: 100,
+            default: 10,
+            example: 10
+        }
+    }
 
-        #swagger.responses[404] = {
-            description: 'Project not found',
-            schema: {
-                $ref: '#/components/schemas/ErrorResponse'
-            }
+    #swagger.parameters['sortBy'] = {
+        in: 'query',
+        description: 'Field used to sort tasks.',
+        required: false,
+        schema: {
+            '@enum': ['title', 'status', 'createdAt', 'updatedAt'],
+            default: 'createdAt',
+            example: 'createdAt'
         }
-    */
+    }
+
+    #swagger.parameters['order'] = {
+        in: 'query',
+        description: 'Sort direction. Defaults to descending.',
+        required: false,
+        schema: {
+            '@enum': ['asc', 'desc'],
+            default: 'desc',
+            example: 'desc'
+        }
+    }
+
+    #swagger.parameters['status'] = {
+        in: 'query',
+        description: 'Filter tasks by status.',
+        required: false,
+        schema: {
+            '@enum': ['todo', 'in_progress', 'done'],
+            example: 'todo'
+        }
+    }
+
+    #swagger.parameters['search'] = {
+        in: 'query',
+        description: 'Optional case-insensitive partial search. Maximum length: 100 characters.',
+        required: false,
+        '@schema': {
+            type: 'string',
+            maxLength: 100,
+            example: 'backend'
+        }
+    }
+
+    #swagger.responses[200] = {
+        description: 'Tasks fetched successfully',
+        schema: {
+            $ref: '#/components/schemas/TasksResponse'
+        }
+    }
+
+    #swagger.responses[400] = {
+        description: 'Invalid pagination, sorting, or task status parameters',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[404] = {
+        description: 'Project not found',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+        */
+
     const { projectId } = req.params
+    const { page, limit, skip } = getPaginationOptions(req.query)
+    const sortOptions = getSortOptions(req.query, ["title", "status", "createdAt", "updatedAt"])
+    const { status } = req.query
+    const searchRegex = getSearchRegex(req.query.search);
     const project = await Project.findById(projectId)
     if (!project) {
         throw new ApiError(404, "project not found")
     }
 
-    const tasks = await Task.find({
-        project: new mongoose.Types.ObjectId(projectId),
-    }).populate("assignedTo", "avatar username fullName ")
+    const taskFilter = {
+        project: new mongoose.Types.ObjectId(projectId)
+    }
 
-    return res
-        .status(200)
-        .json(new ApiResponse(
+    if (status !== undefined) {
+        if (typeof status !== "string" || !AvailableTaskStatus.includes(status)) {
+            throw new ApiError(400, "Invalid task status")
+        }
+
+        taskFilter.status = status
+    }
+    if (searchRegex) {
+        taskFilter.$or = [
+            { title: searchRegex },
+            { description: searchRegex },
+        ];
+    }
+
+    const [tasks, totalTasks] = await Promise.all([
+        Task.find(taskFilter)
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(limit)
+            .populate("assignedTo", "avatar username fullName"),
+
+        Task.countDocuments(taskFilter),
+    ]);
+
+    const totalPages = Math.ceil(totalTasks / limit);
+
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    const nextPage = hasNextPage ? page + 1 : null;
+    const previousPage = hasPreviousPage ? page - 1 : null;
+
+    return res.status(200).json(
+        new ApiResponse(
             200,
-            tasks,
-            "Task fetched successfully"
-        ))
+            {
+                tasks,
+                pagination: {
+                    currentPage: page,
+                    limit,
+                    totalTasks,
+                    totalPages,
+                    hasNextPage,
+                    nextPage,
+                    hasPreviousPage,
+                    previousPage,
+                },
+            },
+            "Tasks fetched successfully"
+        )
+    );
 
 })
 
@@ -64,7 +191,7 @@ const createTask = asyncHandler(async (req, res) => {
      #swagger.tags = ['Tasks']
      #swagger.summary = 'Create a new task'
      #swagger.security = [{ "bearerAuth": [] }]
- 
+
      #swagger.requestBody = {
          required: true,
          content: {
@@ -75,35 +202,35 @@ const createTask = asyncHandler(async (req, res) => {
              }
          }
      }
- 
+
      #swagger.responses[201] = {
          description: 'Task created successfully',
          schema: {
              $ref: '#/components/schemas/CreateTaskResponse'
          }
      }
- 
+
      #swagger.responses[401] = {
          description: 'Unauthorized',
          schema: {
              $ref: '#/components/schemas/ErrorResponse'
          }
      }
- 
+
      #swagger.responses[403] = {
          description: 'User does not have permission to create tasks',
          schema: {
              $ref: '#/components/schemas/ErrorResponse'
          }
      }
- 
+
      #swagger.responses[404] = {
          description: 'Project not found',
          schema: {
              $ref: '#/components/schemas/ErrorResponse'
          }
      }
- 
+
      #swagger.responses[422] = {
          description: 'Validation failed',
          schema: {
@@ -168,21 +295,21 @@ const getTaskById = asyncHandler(async (req, res) => {
         #swagger.tags = ['Tasks']
         #swagger.summary = 'Get task by ID'
         #swagger.security = [{ "bearerAuth": [] }]
-    
+
         #swagger.responses[200] = {
             description: 'Task fetched successfully',
             schema: {
                 $ref: '#/components/schemas/TaskDetailResponse'
             }
         }
-    
+
         #swagger.responses[401] = {
             description: 'Unauthorized',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
-    
+
         #swagger.responses[404] = {
             description: 'Task not found',
             schema: {
@@ -497,7 +624,7 @@ const createSubTask = asyncHandler(async (req, res) => {
         #swagger.tags = ['Subtasks']
         #swagger.summary = 'Create a new subtask'
         #swagger.security = [{ "bearerAuth": [] }]
-    
+
         #swagger.requestBody = {
             required: true,
             content: {
@@ -508,42 +635,42 @@ const createSubTask = asyncHandler(async (req, res) => {
                 }
             }
         }
-    
+
         #swagger.responses[201] = {
             description: 'Subtask created successfully',
             schema: {
                 $ref: '#/components/schemas/CreateSubTaskResponse'
             }
         }
-    
+
         #swagger.responses[400] = {
             description: 'Invalid project ID',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
-    
+
         #swagger.responses[401] = {
             description: 'Unauthorized',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
-    
+
         #swagger.responses[403] = {
             description: 'User does not have permission to create subtasks',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
-    
+
         #swagger.responses[404] = {
             description: 'Task not found',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
-    
+
         #swagger.responses[422] = {
             description: 'Validation failed',
             schema: {
@@ -584,7 +711,7 @@ const updateSubTask = asyncHandler(async (req, res) => {
        #swagger.tags = ['Subtasks']
        #swagger.summary = 'Update subtask'
        #swagger.security = [{ "bearerAuth": [] }]
-   
+
        #swagger.requestBody = {
            required: true,
            content: {
@@ -595,42 +722,42 @@ const updateSubTask = asyncHandler(async (req, res) => {
                }
            }
        }
-   
+
        #swagger.responses[200] = {
            description: 'Subtask updated successfully',
            schema: {
                $ref: '#/components/schemas/UpdateSubTaskResponse'
            }
        }
-   
+
        #swagger.responses[400] = {
            description: 'Invalid project ID or user is not a member of the project',
            schema: {
                $ref: '#/components/schemas/ErrorResponse'
            }
        }
-   
+
        #swagger.responses[401] = {
            description: 'Unauthorized',
            schema: {
                $ref: '#/components/schemas/ErrorResponse'
            }
        }
-   
+
        #swagger.responses[403] = {
            description: 'User does not have permission to update the subtask',
            schema: {
                $ref: '#/components/schemas/ErrorResponse'
            }
        }
-   
+
        #swagger.responses[404] = {
            description: 'Subtask not found',
            schema: {
                $ref: '#/components/schemas/ErrorResponse'
            }
        }
-   
+
        #swagger.responses[422] = {
            description: 'Validation failed',
            schema: {
@@ -703,35 +830,35 @@ const deleteSubTask = asyncHandler(async (req, res) => {
         #swagger.tags = ['Subtasks']
         #swagger.summary = 'Delete subtask'
         #swagger.security = [{ "bearerAuth": [] }]
-    
+
         #swagger.responses[200] = {
             description: 'Subtask deleted successfully',
             schema: {
                 $ref: '#/components/schemas/DeleteSubTaskResponse'
             }
         }
-    
+
         #swagger.responses[400] = {
             description: 'Invalid project ID or user is not a member of the project',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
-    
+
         #swagger.responses[401] = {
             description: 'Unauthorized',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
-    
+
         #swagger.responses[403] = {
             description: 'User does not have permission to delete the subtask',
             schema: {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
-    
+
         #swagger.responses[404] = {
             description: 'Subtask not found',
             schema: {

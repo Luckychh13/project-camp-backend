@@ -4,49 +4,126 @@ import { Project } from "../models/project.models.js"
 import { ApiResponse } from "../utils/api-response.js"
 import { ApiError } from "../utils/api-error.js"
 import { asyncHandler } from "../utils/async-handler.js"
+import { getPaginationOptions } from "../utils/pagination.js";
+import { getSortOptions } from "../utils/sorting.js"
+import { getSearchRegex } from "../utils/search.js"
 
 const getNotes = asyncHandler(async (req, res) => {
-  /*
-    #swagger.tags = ['Notes']
-    #swagger.summary = 'Get project notes'
-    #swagger.security = [{ "bearerAuth": [] }]
+    // #swagger.autoQuery = false
+    /*
+        #swagger.tags = ['Notes']
+        #swagger.summary = 'Get project notes'
+        #swagger.security = [{ "bearerAuth": [] }]
 
-    #swagger.responses[200] = {
-        description: 'Notes fetched successfully',
-        schema: {
-            $ref: '#/components/schemas/NotesResponse'
+        #swagger.parameters['page'] = {
+            in: 'query',
+            description: 'Page number, starting from 1. Defaults to 1.',
+            required: false,
+            '@schema': {
+                type: 'integer',
+                minimum: 1,
+                default: 1,
+                example: 1
+            }
         }
-    }
 
-    #swagger.responses[400] = {
-        description: 'Invalid project ID',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.parameters['limit'] = {
+            in: 'query',
+            description: 'Number of notes per page. Maximum is 100.',
+            required: false,
+            '@schema': {
+                type: 'integer',
+                minimum: 1,
+                maximum: 100,
+                default: 10,
+                example: 10
+            }
         }
-    }
 
-    #swagger.responses[401] = {
-        description: 'Unauthorized',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.parameters['sortBy'] = {
+            in: 'query',
+            description: 'Field used to sort notes.',
+            required: false,
+            schema: {
+                '@enum': ['title', 'createdAt', 'updatedAt'],
+                default: 'createdAt',
+                example: 'title'
+            }
         }
-    }
 
-    #swagger.responses[403] = {
-        description: 'User does not have permission to access project notes',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.parameters['order'] = {
+            in: 'query',
+            description: 'Sort direction.',
+            required: false,
+            schema: {
+                '@enum': ['asc', 'desc'],
+                default: 'desc',
+                example: 'desc'
+            }
         }
-    }
 
-    #swagger.responses[404] = {
-        description: 'Project not found',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.parameters['createdBy'] = {
+            in: 'query',
+            description: 'Filter notes by creator user ID.',
+            required: false,
+            '@schema': {
+                type: 'string',
+                pattern: '^[a-fA-F0-9]{24}$',
+                example: '507f1f77bcf86cd799439011'
+            }
         }
-    }
-*/
+
+        #swagger.parameters['search'] = {
+            in: 'query',
+            description: 'Optional case-insensitive partial search. Maximum length: 100 characters.',
+            required: false,
+            '@schema': {
+                type: 'string',
+                maxLength: 100,
+                example: 'backend'
+            }
+        }
+
+        #swagger.responses[200] = {
+            description: 'Notes fetched successfully',
+            schema: {
+                $ref: '#/components/schemas/NotesResponse'
+            }
+        }
+
+        #swagger.responses[400] = {
+            description: 'Invalid project ID',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[403] = {
+            description: 'User does not have permission to access project notes',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+
+        #swagger.responses[404] = {
+            description: 'Project not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
+        }
+            */
     const { projectId } = req.params
+    const { page, limit, skip } = getPaginationOptions(req.query);
+    const sortOptions = getSortOptions(req.query, ["title", "createdAt", "updatedAt"])
+    const { createdBy } = req.query
+    const searchRegex = getSearchRegex(req.query.search)
 
     const project = await Project.findById(projectId)
 
@@ -54,74 +131,124 @@ const getNotes = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Project not found")
     }
 
-    const notes = await Note.find({
+    const notesFilter = {
         project: new mongoose.Types.ObjectId(projectId)
-    })
-        .populate("createdBy", "username fullName avatar")
-        .sort({ createdAt: -1 })
+    }
+    if (createdBy !== undefined) {
+        if (
+            typeof createdBy !== "string" ||
+            !/^[a-fA-F0-9]{24}$/.test(createdBy)
+        ) {
+            throw new ApiError(400, "Invalid note creator ID");
+        }
 
-    return res.status(200).json(new ApiResponse(200, notes, "Notes fetched successfully"))
+        notesFilter.createdBy = new mongoose.Types.ObjectId(createdBy);
+    }
+    if (searchRegex) {
+        notesFilter.$or = [
+            { title: searchRegex },
+            { content: searchRegex },
+        ];
+    }
+
+
+    const [notes, totalNotes] = await Promise.all([
+        Note.find(notesFilter)
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(limit)
+            .populate("createdBy", "username fullName avatar"),
+
+        Note.countDocuments(notesFilter)
+    ])
+
+    const totalPages = Math.ceil(totalNotes / limit)
+
+    const hasNextPage = page < totalPages
+    const hasPreviousPage = page > 1
+
+    const nextPage = hasNextPage ? page + 1 : null
+    const previousPage = hasPreviousPage ? page - 1 : null
+
+
+    return res.status(200)
+        .json(new ApiResponse(
+            200,
+            {
+                notes,
+                pagination: {
+                    currentPage: page,
+                    limit,
+                    totalNotes,
+                    totalPages,
+                    hasNextPage,
+                    nextPage,
+                    hasPreviousPage,
+                    previousPage
+                }
+            },
+            "Notes fetched successfully"))
 })
 
 const createNote = asyncHandler(async (req, res) => {
-/*
-    #swagger.tags = ['Notes']
-    #swagger.summary = 'Create a project note'
-    #swagger.security = [{ "bearerAuth": [] }]
+    /*
+        #swagger.tags = ['Notes']
+        #swagger.summary = 'Create a project note'
+        #swagger.security = [{ "bearerAuth": [] }]
 
-    #swagger.requestBody = {
-        required: true,
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: '#/components/schemas/CreateNoteRequest'
+        #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: '#/components/schemas/CreateNoteRequest'
+                    }
                 }
             }
         }
-    }
 
-    #swagger.responses[201] = {
-        description: 'Note created successfully',
-        schema: {
-            $ref: '#/components/schemas/CreateNoteResponse'
+        #swagger.responses[201] = {
+            description: 'Note created successfully',
+            schema: {
+                $ref: '#/components/schemas/CreateNoteResponse'
+            }
         }
-    }
 
-    #swagger.responses[400] = {
-        description:'Invalid project ID',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[400] = {
+            description:'Invalid project ID',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[401] = {
-        description: 'Unauthorized',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[403] = {
-        description: 'User does not have permission to create notes',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[403] = {
+            description: 'User does not have permission to create notes',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[404] = {
-        description: 'Project not found',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[404] = {
+            description: 'Project not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[422] = {
-        description: 'Validation failed',
-        schema: {
-            $ref: '#/components/schemas/ValidationErrorResponse'
+        #swagger.responses[422] = {
+            description: 'Validation failed',
+            schema: {
+                $ref: '#/components/schemas/ValidationErrorResponse'
+            }
         }
-    }
-*/
+    */
 
     const { projectId } = req.params
     const { title, content } = req.body
@@ -143,60 +270,60 @@ const createNote = asyncHandler(async (req, res) => {
 })
 
 const getNoteById = asyncHandler(async (req, res) => {
-/*
-    #swagger.tags = ['Notes']
-    #swagger.summary = 'Get note by ID'
-    #swagger.security = [{ "bearerAuth": [] }]
+    /*
+        #swagger.tags = ['Notes']
+        #swagger.summary = 'Get note by ID'
+        #swagger.security = [{ "bearerAuth": [] }]
 
-    #swagger.responses[200] = {
-        description: 'Note fetched successfully',
-        schema: {
-            $ref: '#/components/schemas/NoteResponse'
+        #swagger.responses[200] = {
+            description: 'Note fetched successfully',
+            schema: {
+                $ref: '#/components/schemas/NoteResponse'
+            }
         }
-    }
 
-    #swagger.responses[400] = {
-        description: 'Invalid project ID',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[400] = {
+            description: 'Invalid project ID',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[401] = {
-        description: 'Unauthorized',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[403] = {
-        description: 'User does not have permission to access the note',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[403] = {
+            description: 'User does not have permission to access the note',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[404] = {
-        description: 'Note not found',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[404] = {
+            description: 'Note not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[422] = {
-        description: 'Validation failed',
-        schema: {
-            $ref: '#/components/schemas/ValidationErrorResponse'
+        #swagger.responses[422] = {
+            description: 'Validation failed',
+            schema: {
+                $ref: '#/components/schemas/ValidationErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[500] = {
-        description: 'Internal server error caused by an invalid note ID format',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[500] = {
+            description: 'Internal server error caused by an invalid note ID format',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
-*/
+    */
     const { projectId, noteId } = req.params
 
     const note = await Note.findOne({
@@ -213,64 +340,64 @@ const getNoteById = asyncHandler(async (req, res) => {
 })
 
 const updateNote = asyncHandler(async (req, res) => {
-/*
-    #swagger.tags = ['Notes']
-    #swagger.summary = 'Update a Note'
-    #swagger.security = [{ "bearerAuth": [] }]
+    /*
+        #swagger.tags = ['Notes']
+        #swagger.summary = 'Update a Note'
+        #swagger.security = [{ "bearerAuth": [] }]
 
-    #swagger.requestBody = {
-        required: true,
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: '#/components/schemas/UpdateNoteRequest'
+        #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        $ref: '#/components/schemas/UpdateNoteRequest'
+                    }
                 }
             }
         }
-    }
 
-    #swagger.responses[200] = {
-        description: 'Note updated successfully',
-        schema: {
-            $ref: '#/components/schemas/UpdateNoteResponse'
+        #swagger.responses[200] = {
+            description: 'Note updated successfully',
+            schema: {
+                $ref: '#/components/schemas/UpdateNoteResponse'
+            }
         }
-    }
 
-    #swagger.responses[400] = {
-        description: 'Invalid project ID',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[400] = {
+            description: 'Invalid project ID',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[401] = {
-        description: 'Unauthorized',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[401] = {
+            description: 'Unauthorized',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[403] = {
-        description: 'User does not have permission to update notes',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[403] = {
+            description: 'User does not have permission to update notes',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[404] = {
-        description: 'Note not found',
-        schema: {
-            $ref: '#/components/schemas/ErrorResponse'
+        #swagger.responses[404] = {
+            description: 'Note not found',
+            schema: {
+                $ref: '#/components/schemas/ErrorResponse'
+            }
         }
-    }
 
-    #swagger.responses[422] = {
-        description: 'Validation failed',
-        schema: {
-            $ref: '#/components/schemas/ValidationErrorResponse'
+        #swagger.responses[422] = {
+            description: 'Validation failed',
+            schema: {
+                $ref: '#/components/schemas/ValidationErrorResponse'
+            }
         }
-    }
-*/
+    */
     const { projectId, noteId } = req.params
     const { title, content } = req.body
 

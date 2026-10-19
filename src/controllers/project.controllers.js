@@ -5,14 +5,86 @@ import { ApiResponse } from "../utils/api-response.js"
 import { ApiError } from "../utils/api-error.js"
 import { asyncHandler } from "../utils/async-handler.js"
 import mongoose from "mongoose"
+import { getPaginationOptions } from "../utils/pagination.js";
 import { AvailableUserRole, UserRolesEnum } from "../utils/constants.js"
+import { getSortOptions } from "../utils/sorting.js"
+import { getSearchRegex } from "../utils/search.js"
 
 
 const getProjects = asyncHandler(async (req, res) => {
-    /*
+    // #swagger.autoQuery = false
+/*
     #swagger.tags = ['Projects']
     #swagger.summary = 'Get user projects'
     #swagger.security = [{ "bearerAuth": [] }]
+
+    #swagger.parameters['page'] = {
+        in: 'query',
+        description: 'Page number, starting from 1. Defaults to 1.',
+        required: false,
+        '@schema': {
+            type: 'integer',
+            minimum: 1,
+            default: 1,
+            example: 1
+        }
+    }
+
+    #swagger.parameters['limit'] = {
+        in: 'query',
+        description: 'Number of projects per page. Maximum is 100.',
+        required: false,
+        '@schema': {
+            type: 'integer',
+            minimum: 1,
+            maximum: 100,
+            default: 10,
+            example: 10
+        }
+    }
+
+    #swagger.parameters['sortBy'] = {
+        in: 'query',
+        description: 'Field used to sort projects.',
+        required: false,
+        schema: {
+            '@enum': ['name', 'createdAt', 'updatedAt'],
+            default: 'createdAt',
+            example: 'name'
+        }
+    }
+
+    #swagger.parameters['order'] = {
+        in: 'query',
+        description: 'Sort direction.',
+        required: false,
+        schema: {
+            '@enum': ['asc', 'desc'],
+            default: 'desc',
+            example: 'desc'
+        }
+    }
+
+    #swagger.parameters['role'] = {
+        in: 'query',
+        description: 'Filter projects by the current user’s project role.',
+        required: false,
+        schema: {
+            '@enum': ['admin', 'project_admin', 'member'],
+            example: 'member'
+        }
+    }
+
+    #swagger.parameters['search'] = {
+        in: 'query',
+        description: 'Optional case-insensitive partial search. Maximum length: 100 characters.',
+        required: false,
+        '@schema': {
+            type: 'string',
+            maxLength: 100,
+            example: 'backend'
+        }
+    }
 
     #swagger.responses[200] = {
         description: 'Projects fetched successfully',
@@ -20,60 +92,177 @@ const getProjects = asyncHandler(async (req, res) => {
             $ref: '#/components/schemas/ProjectsResponse'
         }
     }
-*/
-    const projects = await ProjectMember.aggregate([
-        {
-            $match: {
-                user: new mongoose.Types.ObjectId(req.user._id),
+
+    #swagger.responses[400] = {
+        description: 'Invalid pagination, sorting, or role filter parameters',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+    #swagger.responses[401] = {
+        description: 'Unauthorized',
+        schema: {
+            $ref: '#/components/schemas/ErrorResponse'
+        }
+    }
+
+        */
+
+    const { page, limit, skip } = getPaginationOptions(req.query);
+    const sortOptions = getSortOptions(req.query, ["name", "createdAt", "updatedAt"])
+    const { role } = req.query;
+    const searchRegex = getSearchRegex(req.query.search)
+    const projectSortOptions = Object.fromEntries(
+        Object.entries(sortOptions).map(([field, direction]) => [
+            field === "_id" ? "project._id" : `project.${field}`,
+            direction,
+        ])
+    );
+    const projectsFilter = {
+        user: new mongoose.Types.ObjectId(req.user._id),
+    };
+
+    if (role !== undefined) {
+        if (
+            typeof role !== "string" ||
+            !AvailableUserRole.includes(role)
+        ) {
+            throw new ApiError(400, "Invalid project role");
+        }
+
+        projectsFilter.role = role;
+    }
+
+
+    const [projects, totalProjects] = await Promise.all([
+        ProjectMember.aggregate([
+            {
+                $match: projectsFilter,
             },
-        },
-        {
-            $lookup: {
-                from: "projects",
-                localField: "project",
-                foreignField: "_id",
-                as: "project",
-                pipeline: [
-                    {
-                        $lookup: {
-                            from: "projectmembers",
-                            localField: "_id",
-                            foreignField: "project",
-                            as: "projectmembers",
-                        },
-                    },
-                    {
-                        $addFields: {
-                            members: {
-                                $size: "$projectmembers",
+            {
+                $lookup: {
+                    from: "projects",
+                    localField: "project",
+                    foreignField: "_id",
+                    as: "project",
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: "projectmembers",
+                                localField: "_id",
+                                foreignField: "project",
+                                as: "projectmembers",
                             },
                         },
-                    },
-                ],
-            },
-        },
-        {
-            $unwind: "$project",
-        },
-        {
-            $project: {
-                project: {
-                    _id: 1,
-                    name: 1,
-                    description: 1,
-                    members: 1,
-                    createdAt: 1,
-                    createdBy: 1,
+                        {
+                            $addFields: {
+                                members: {
+                                    $size: "$projectmembers",
+                                },
+                            },
+                        },
+                    ],
                 },
-                role: 1,
-                _id: 0,
             },
-        },
+            {
+                $unwind: "$project",
+            },
+            ...(searchRegex
+                ? [
+                    {
+                        $match: {
+                            $or: [
+                                { "project.name": searchRegex },
+                                { "project.description": searchRegex },
+                            ],
+                        },
+                    },
+                ]
+                : []),
+            {
+                $sort: projectSortOptions,
+            },
+            {
+                $project: {
+                    project: {
+                        _id: 1,
+                        name: 1,
+                        description: 1,
+                        members: 1,
+                        createdAt: 1,
+                        createdBy: 1,
+                    },
+                    role: 1,
+                    _id: 0,
+                },
+            },
+            {
+                $skip: skip,
+            },
+            {
+                $limit: limit,
+            },
+        ]),
+
+        searchRegex
+            ? ProjectMember.aggregate([
+                {
+                    $match: projectsFilter,
+                },
+                {
+                    $lookup: {
+                        from: "projects",
+                        localField: "project",
+                        foreignField: "_id",
+                        as: "project",
+                    },
+                },
+                {
+                    $unwind: "$project",
+                },
+                {
+                    $match: {
+                        $or: [
+                            { "project.name": searchRegex },
+                            { "project.description": searchRegex },
+                        ],
+                    },
+                },
+                {
+                    $count: "totalProjects",
+                },
+            ]).then((result) => result[0]?.totalProjects ?? 0)
+            : ProjectMember.countDocuments(projectsFilter),
     ]);
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, projects, "Projects fetched successfully"));
+    const totalPages = Math.ceil(totalProjects / limit);
+
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    const nextPage = hasNextPage ? page + 1 : null;
+    const previousPage = hasPreviousPage ? page - 1 : null;
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                projects,
+                pagination: {
+                    currentPage: page,
+                    limit,
+                    totalProjects,
+                    totalPages,
+                    hasNextPage,
+                    nextPage,
+                    hasPreviousPage,
+                    previousPage,
+                },
+            },
+            "Projects fetched successfully"
+        )
+    );
 });
 
 const getProjectById = asyncHandler(async (req, res) => {
@@ -459,10 +648,79 @@ const addMembersToProject = asyncHandler(async (req, res) => {
 })
 
 const getProjectMembers = asyncHandler(async (req, res) => {
+    // #swagger.autoQuery = false
     /*
         #swagger.tags = ['Projects']
         #swagger.summary = 'Get project members'
         #swagger.security = [{ "bearerAuth": [] }]
+
+        #swagger.parameters['page'] = {
+            in: 'query',
+            description: 'Page number, starting from 1. Defaults to 1.',
+            required: false,
+            '@schema': {
+                type: 'integer',
+                minimum: 1,
+                default: 1,
+                example: 1
+            }
+        }
+
+        #swagger.parameters['limit'] = {
+            in: 'query',
+            description: 'Number of members per page. Maximum is 100.',
+            required: false,
+            '@schema': {
+                type: 'integer',
+                minimum: 1,
+                maximum: 100,
+                default: 10,
+                example: 10
+            }
+        }
+
+        #swagger.parameters['sortBy'] = {
+            in: 'query',
+            description: 'Field used to sort project members.',
+            required: false,
+            schema: {
+                '@enum': ['role', 'createdAt', 'updatedAt'],
+                default: 'createdAt',
+                example: 'role'
+            }
+        }
+
+        #swagger.parameters['order'] = {
+            in: 'query',
+            description: 'Sort direction.',
+            required: false,
+            schema: {
+                '@enum': ['asc', 'desc'],
+                default: 'desc',
+                example: 'desc'
+            }
+        }
+
+        #swagger.parameters['role'] = {
+            in: 'query',
+            description: 'Filter project members by role.',
+            required: false,
+            schema: {
+                '@enum': ['admin', 'project_admin', 'member'],
+                example: 'member'
+            }
+        }
+
+        #swagger.parameters['search'] = {
+            in: 'query',
+            description: 'Optional case-insensitive partial search across member username and full name.',
+            required: false,
+            '@schema': {
+            type: 'string',
+            maxLength: 100,
+            example: 'rahul'
+        }
+        }
 
         #swagger.responses[200] = {
             description: 'Project members fetched successfully',
@@ -491,20 +749,35 @@ const getProjectMembers = asyncHandler(async (req, res) => {
                 $ref: '#/components/schemas/ErrorResponse'
             }
         }
-    */
+            */
     const { projectId } = req.params
+    const { page, limit, skip } = getPaginationOptions(req.query);
+    const sortOptions = getSortOptions(req.query, ["role", "createdAt", "updatedAt",]);
+    const { role } = req.query;
+    const searchRegex = getSearchRegex(req.query.search)
 
     const project = await Project.findById(projectId)
     if (!project) {
         throw new ApiError(404, "Project not found")
     }
 
-    const projectMembers = await ProjectMember.aggregate([
+    const membersFilter = {
+        project: new mongoose.Types.ObjectId(projectId),
+    }
+    if (role !== undefined) {
+        if (
+            typeof role !== "string" ||
+            !AvailableUserRole.includes(role)
+        ) {
+            throw new ApiError(400, "Invalid project member role");
+        }
+
+        membersFilter.role = role;
+    }
+
+
+    const userLookupStages = [
         {
-            $match: {
-                project: new mongoose.Types.ObjectId(projectId)
-            }
-        }, {
             $lookup: {
                 from: "users",
                 localField: "user",
@@ -516,32 +789,104 @@ const getProjectMembers = asyncHandler(async (req, res) => {
                             _id: 1,
                             username: 1,
                             fullName: 1,
-                            avatar: 1
-                        }
-                    }
-                ]
-            }
-        }, {
+                            avatar: 1,
+                        },
+                    },
+                ],
+            },
+        },
+        {
             $addFields: {
                 user: {
-                    $arrayElemAt: ["$user", 0]
-                }
-            }
-        }, {
-            $project: {
-                project: 1,
-                user: 1,
-                role: 1,
-                createdAt: 1,
-                updatedAt: 1,
-                _id: 0
-            }
-        }
-    ])
+                    $arrayElemAt: ["$user", 0],
+                },
+            },
+        },
+    ];
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, projectMembers, "Project members fetched"))
+    const memberSearchStages = searchRegex
+        ? [
+            {
+                $match: {
+                    $or: [
+                        { "user.username": searchRegex },
+                        { "user.fullName": searchRegex },
+                    ],
+                },
+            },
+        ]
+        : [];
+
+    const [projectMembers, totalMembers] = await Promise.all([
+        ProjectMember.aggregate([
+            {
+                $match: membersFilter,
+            },
+            ...(searchRegex
+                ? [...userLookupStages, ...memberSearchStages]
+                : []),
+            {
+                $sort: sortOptions
+            },
+            {
+                $skip: skip,
+            },
+            {
+                $limit: limit,
+            },
+            ...(!searchRegex ? userLookupStages : []),
+            {
+                $project: {
+                    project: 1,
+                    user: 1,
+                    role: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    _id: 0,
+                },
+            },
+        ]),
+        searchRegex
+            ? ProjectMember.aggregate([
+                {
+                    $match: membersFilter,
+                },
+                ...userLookupStages,
+                ...memberSearchStages,
+                {
+                    $count: "totalMembers",
+                },
+            ]).then((result) => result[0]?.totalMembers ?? 0)
+            : ProjectMember.countDocuments(membersFilter),
+    ]);
+
+    const totalPages = Math.ceil(totalMembers / limit);
+
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    const nextPage = hasNextPage ? page + 1 : null;
+    const previousPage = hasPreviousPage ? page - 1 : null;
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                members: projectMembers,
+                pagination: {
+                    currentPage: page,
+                    limit,
+                    totalMembers,
+                    totalPages,
+                    hasNextPage,
+                    nextPage,
+                    hasPreviousPage,
+                    previousPage,
+                },
+            },
+            "Project members fetched"
+        )
+    );
 
 })
 

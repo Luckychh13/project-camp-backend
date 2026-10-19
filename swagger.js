@@ -5,10 +5,27 @@ import { projectSchemas } from "./src/docs/schemas/project.schema.js"
 import { taskSchemas } from "./src/docs/schemas/task.schema.js"
 import { subTaskSchemas } from "./src/docs/schemas/subTask.schema.js";
 import { commonSchemas } from "./src/docs/schemas/common.schema.js";
-
+const {
+    TasksResponse: oldTasksResponse,
+    TaskPagination: oldTaskPagination,
+    ...taskSchemasBase
+} = taskSchemas;
+const {
+    NotesResponse: oldNotesResponse,
+    NotePagination: oldNotePagination,
+    ...noteSchemasBase
+} = noteSchemas;
 const options = {
     openapi: "3.0.0"
 }
+
+const {
+    ProjectsResponse: oldProjectsResponse,
+    ProjectsPagination: oldProjectsPagination,
+    ProjectMembersResponse: oldProjectMembersResponse,
+    ProjectMembersPagination: oldProjectMembersPagination,
+    ...projectSchemasBase
+} = projectSchemas;
 
 const outputFile = "./swagger-output.json"
 
@@ -40,10 +57,10 @@ const doc = {
         },
         schemas: {
             ...commonSchemas,
-            ...noteSchemas,
+            ...noteSchemasBase,
             ...authSchemas,
-            ...projectSchemas,
-            ...taskSchemas,
+            ...projectSchemasBase,
+            ...taskSchemasBase,
             ...subTaskSchemas
 
         },
@@ -107,6 +124,149 @@ const doc = {
                             format: "binary"
                         }
                     }
+                }
+            },
+            TaskPagination: {
+                type: 'object',
+                properties: {
+                    currentPage: { type: 'integer', example: 1 },
+                    limit: { type: 'integer', example: 10 },
+                    totalTasks: { type: 'integer', example: 23 },
+                    totalPages: { type: 'integer', example: 3 },
+                    hasNextPage: { type: 'boolean', example: true },
+                    nextPage: { type: 'integer', nullable: true, example: 2 },
+                    hasPreviousPage: { type: 'boolean', example: true },
+                    previousPage: { type: 'integer', nullable: true, example: 1 }
+                }
+            },
+            TasksResponse: {
+                type: 'object',
+                properties: {
+                    statusCode: { type: 'integer', example: 200 },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            tasks: {
+                                type: 'array',
+                                items: {
+                                    $ref: '#/components/schemas/TaskListItem'
+                                }
+                            },
+                            pagination: {
+                                $ref: '#/components/schemas/TaskPagination'
+                            }
+                        }
+                    },
+                    message: { type: 'string', example: 'Tasks fetched successfully' },
+                    success: { type: 'boolean', example: true }
+                }
+            },
+            NotePagination: {
+                type: 'object',
+                properties: {
+                    currentPage: { type: 'integer', example: 1 },
+                    limit: { type: 'integer', example: 10 },
+                    totalNotes: { type: 'integer', example: 15 },
+                    totalPages: { type: 'integer', example: 2 },
+                    hasNextPage: { type: 'boolean', example: true },
+                    nextPage: { type: 'integer', nullable: true, example: 2 },
+                    hasPreviousPage: { type: 'boolean', example: false },
+                    previousPage: { type: 'integer', nullable: true, example: null }
+                }
+            },
+            NotesResponse: {
+                type: 'object',
+                properties: {
+                    statusCode: { type: 'integer', example: 200 },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            notes: {
+                                type: 'array',
+                                items: {
+                                    $ref: '#/components/schemas/Note'
+                                }
+                            },
+                            pagination: {
+                                $ref: '#/components/schemas/NotePagination'
+                            }
+                        }
+                    },
+                    message: { type: 'string', example: 'Notes fetched successfully' },
+                    success: { type: 'boolean', example: true }
+                }
+            },
+            ProjectsPagination: {
+                type: 'object',
+                properties: {
+                    currentPage: { type: 'integer', example: 1 },
+                    limit: { type: 'integer', example: 10 },
+                    totalProjects: { type: 'integer', example: 8 },
+                    totalPages: { type: 'integer', example: 1 },
+                    hasNextPage: { type: 'boolean', example: false },
+                    nextPage: { type: 'integer', nullable: true, example: null },
+                    hasPreviousPage: { type: 'boolean', example: false },
+                    previousPage: { type: 'integer', nullable: true, example: null }
+                }
+            },
+            ProjectsResponse: {
+                type: 'object',
+                properties: {
+                    statusCode: { type: 'integer', example: 200 },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            projects: {
+                                type: 'array',
+                                items: {
+                                    $ref: '#/components/schemas/ProjectListItem'
+                                }
+                            },
+                            pagination: {
+                                $ref: '#/components/schemas/ProjectsPagination'
+                            }
+                        }
+                    },
+                    message: { type: 'string', example: 'Projects fetched successfully' },
+                    success: { type: 'boolean', example: true }
+                }
+            },
+            ProjectMembersPagination: {
+                type: 'object',
+                properties: {
+                    currentPage: { type: 'integer', example: 1 },
+                    limit: { type: 'integer', example: 10 },
+                    totalMembers: { type: 'integer', example: 18 },
+                    totalPages: { type: 'integer', example: 2 },
+                    hasNextPage: { type: 'boolean', example: false },
+                    nextPage: { type: 'integer', nullable: true, example: null },
+                    hasPreviousPage: { type: 'boolean', example: true },
+                    previousPage: { type: 'integer', nullable: true, example: 1 }
+                }
+            },
+            ProjectMembersResponse: {
+                type: 'object',
+                properties: {
+                    statusCode: { type: 'integer', example: 200 },
+                    data: {
+                        type: 'object',
+                        properties: {
+                            members: {
+                                type: 'array',
+                                items: {
+                                    $ref: '#/components/schemas/ProjectMember'
+                                }
+                            },
+                            pagination: {
+                                $ref: '#/components/schemas/ProjectMembersPagination'
+                            }
+                        }
+                    },
+                    message: {
+                        type: 'string',
+                        example: 'Project members fetched successfully'
+                    },
+                    success: { type: 'boolean', example: true }
                 }
             }
 
