@@ -5,7 +5,7 @@ import app from "../src/app.js"
 
 import { Project } from "../src/models/project.models.js"
 import { ProjectMember } from "../src/models/projectmembers.models.js"
-import { UserRolesEnum } from "../src/utils/constants.js"
+import { UserRolesEnum, AvailableUserRole } from "../src/utils/constants.js"
 
 import {
     createTestAuthSetup,
@@ -122,13 +122,37 @@ describe("Project API", () => {
             expect(response.body.message).toBe(
                 "Projects fetched successfully"
             )
+            expect(response.body.data).toBeDefined();
 
-            expect(response.body.data).toBeDefined()
-            expect(response.body.data.length).toBeGreaterThan(0)
+            const { projects, pagination } = response.body.data;
 
-            expect(response.body.data[0].project.name).toBe(
+            expect(Array.isArray(projects)).toBe(true);
+            expect(projects.length).toBeGreaterThan(0);
+
+            expect(projects[0].project.name).toBe(
                 testData.project.name
-            )
+            );
+
+            expect(pagination.currentPage).toBe(1);
+            expect(pagination.limit).toBe(10);
+            expect(pagination.totalProjects).toBeGreaterThanOrEqual(
+                projects.length
+            );
+
+            expect(pagination.totalPages).toBe(
+                Math.ceil(pagination.totalProjects / pagination.limit)
+            );
+
+            expect(pagination.hasNextPage).toBe(
+                pagination.currentPage < pagination.totalPages
+            );
+
+            expect(pagination.nextPage).toBe(
+                pagination.hasNextPage ? pagination.currentPage + 1 : null
+            );
+
+            expect(pagination.hasPreviousPage).toBe(false);
+            expect(pagination.previousPage).toBe(null);
         } finally {
             await cleanupTestData(testData)
         }
@@ -373,11 +397,13 @@ describe("Project API", () => {
                 "Project members fetched"
             )
 
-            expect(response.body.data).toBeDefined()
-            expect(response.body.data.length).toBe(2)
+            const { members, pagination } = response.body.data;
+
+            expect(Array.isArray(members)).toBe(true);
+            expect(members).toHaveLength(2);
 
             expect(
-                response.body.data.some(
+                members.some(
                     item =>
                         item.user.username ===
                         ownerData.user.username
@@ -385,12 +411,23 @@ describe("Project API", () => {
             ).toBe(true)
 
             expect(
-                response.body.data.some(
+                members.some(
                     item =>
                         item.user.username ===
                         memberData.user.username
                 )
             ).toBe(true)
+
+            expect(pagination).toEqual({
+                currentPage: 1,
+                limit: 10,
+                totalMembers: 2,
+                totalPages: 1,
+                hasNextPage: false,
+                nextPage: null,
+                hasPreviousPage: false,
+                previousPage: null,
+            });
         } finally {
             await cleanupTestData(ownerData)
             await cleanupTestData(memberData)
@@ -1040,5 +1077,550 @@ describe("Project API", () => {
             await cleanupTestData(secondAdmin)
         }
     }, 15000)
-    
+
+    test("should paginate project members and return correct navigation metadata", async () => {
+        const ownerData = await createTestSetup();
+        const memberOne = await createTestAuthSetup();
+        const memberTwo = await createTestAuthSetup();
+
+        try {
+            await ProjectMember.create({
+                user: memberOne.user._id,
+                project: ownerData.project._id,
+                role: UserRolesEnum.MEMBER,
+            });
+
+            await ProjectMember.create({
+                user: memberTwo.user._id,
+                project: ownerData.project._id,
+                role: UserRolesEnum.MEMBER,
+            });
+
+            const firstResponse = await ownerData.agent.get(
+                `/api/v1/projects/${ownerData.project._id}/members?page=1&limit=2`
+            );
+
+            expect(firstResponse.statusCode).toBe(200);
+
+            const {
+                members: firstMembers,
+                pagination: firstPagination,
+            } = firstResponse.body.data;
+
+            expect(firstMembers).toHaveLength(2);
+
+            expect(firstPagination).toMatchObject({
+                currentPage: 1,
+                limit: 2,
+                totalMembers: 3,
+                totalPages: 2,
+                hasNextPage: true,
+                nextPage: 2,
+                hasPreviousPage: false,
+                previousPage: null,
+            });
+
+            const secondResponse = await ownerData.agent.get(
+                `/api/v1/projects/${ownerData.project._id}/members?page=2&limit=2`
+            );
+
+            expect(secondResponse.statusCode).toBe(200);
+
+            const {
+                members: secondMembers,
+                pagination: secondPagination,
+            } = secondResponse.body.data;
+
+            expect(secondMembers).toHaveLength(1);
+
+            expect(secondPagination).toMatchObject({
+                currentPage: 2,
+                limit: 2,
+                totalMembers: 3,
+                totalPages: 2,
+                hasNextPage: false,
+                nextPage: null,
+                hasPreviousPage: true,
+                previousPage: 1,
+            });
+
+            const returnedUserIds = [
+                ...firstMembers,
+                ...secondMembers,
+            ]
+                .map(member => member.user._id)
+                .sort();
+
+            const expectedUserIds = [
+                ownerData.user._id.toString(),
+                memberOne.user._id.toString(),
+                memberTwo.user._id.toString(),
+            ].sort();
+
+            expect(returnedUserIds).toEqual(expectedUserIds);
+        } finally {
+            await cleanupTestData(ownerData);
+            await cleanupTestData(memberOne);
+            await cleanupTestData(memberTwo);
+        }
+    }, 30000);
+
+    test("should paginate user projects and return correct navigation metadata", async () => {
+        const testData = await createTestSetup();
+        const extraProjects = [];
+
+        try {
+            const projectNames = [
+                `Pagination Project B ${testData.user._id}`,
+                `Pagination Project C ${testData.user._id}`,
+            ];
+
+            for (const name of projectNames) {
+                const project = await Project.create({
+                    name,
+                    description: "Pagination integration test",
+                    createdBy: testData.user._id,
+                });
+
+                extraProjects.push(project);
+
+                await ProjectMember.create({
+                    user: testData.user._id,
+                    project: project._id,
+                    role: UserRolesEnum.ADMIN,
+                });
+            }
+
+            const expectedNames = [
+                testData.project.name,
+                ...extraProjects.map(project => project.name),
+            ].sort();
+
+            const firstResponse = await testData.agent.get(
+                "/api/v1/projects?page=1&limit=2"
+            );
+
+            expect(firstResponse.statusCode).toBe(200);
+
+            const {
+                projects: firstProjects,
+                pagination: firstPagination,
+            } = firstResponse.body.data;
+
+            expect(firstProjects).toHaveLength(2);
+
+            expect(firstPagination).toMatchObject({
+                currentPage: 1,
+                limit: 2,
+                totalProjects: 3,
+                totalPages: 2,
+                hasNextPage: true,
+                nextPage: 2,
+                hasPreviousPage: false,
+                previousPage: null,
+            });
+
+            const secondResponse = await testData.agent.get(
+                "/api/v1/projects?page=2&limit=2"
+            );
+
+            expect(secondResponse.statusCode).toBe(200);
+
+            const {
+                projects: secondProjects,
+                pagination: secondPagination,
+            } = secondResponse.body.data;
+
+            expect(secondProjects).toHaveLength(1);
+
+            expect(secondPagination).toMatchObject({
+                currentPage: 2,
+                limit: 2,
+                totalProjects: 3,
+                totalPages: 2,
+                hasNextPage: false,
+                nextPage: null,
+                hasPreviousPage: true,
+                previousPage: 1,
+            });
+
+            const returnedNames = [
+                ...firstProjects,
+                ...secondProjects,
+            ]
+                .map(item => item.project.name)
+                .sort();
+
+            expect(returnedNames).toEqual(expectedNames);
+        } finally {
+            if (extraProjects.length > 0) {
+                const extraProjectIds = extraProjects.map(
+                    project => project._id
+                );
+
+                await ProjectMember.deleteMany({
+                    project: { $in: extraProjectIds },
+                });
+
+                await Project.deleteMany({
+                    _id: { $in: extraProjectIds },
+                });
+            }
+
+            await cleanupTestData(testData);
+        }
+    }, 30000);
+
+    test("should sort projects by name in ascending order", async () => {
+        const testData = await createTestSetup();
+        let createdProjects = [];
+
+        try {
+            const prefix = `sort-${Date.now()}`;
+
+            const names = [
+                `${prefix}-C`,
+                `${prefix}-A`,
+                `${prefix}-B`,
+            ];
+
+            createdProjects = await Project.create(
+                names.map((name) => ({
+                    name,
+                    description: "Sorting integration test",
+                    createdBy: testData.user._id,
+                }))
+            );
+
+            await ProjectMember.insertMany(
+                createdProjects.map((project) => ({
+                    user: testData.user._id,
+                    project: project._id,
+                    role: UserRolesEnum.MEMBER,
+                }))
+            );
+
+            const response = await testData.agent.get(
+                "/api/v1/projects?sortBy=name&order=asc&limit=100"
+            );
+
+            expect(response.statusCode).toBe(200);
+
+            const returnedNames = response.body.data.projects
+                .map((item) => item.project.name)
+                .filter((name) => names.includes(name));
+
+            expect(returnedNames).toEqual([
+                `${prefix}-A`,
+                `${prefix}-B`,
+                `${prefix}-C`,
+            ]);
+        } finally {
+            const projectIds = createdProjects.map(
+                (project) => project._id
+            );
+
+            if (projectIds.length > 0) {
+                await ProjectMember.deleteMany({
+                    project: { $in: projectIds },
+                });
+
+                await Project.deleteMany({
+                    _id: { $in: projectIds },
+                });
+            }
+
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should reject unsupported project sort fields", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const response = await testData.agent.get(
+                "/api/v1/projects?sortBy=password&order=desc"
+            );
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe("Invalid sort field");
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should sort project members by role in ascending order", async () => {
+        const ownerData = await createTestSetup();
+        const memberData = await createTestAuthSetup();
+
+        try {
+            await ProjectMember.create({
+                user: memberData.user._id,
+                project: ownerData.project._id,
+                role: UserRolesEnum.MEMBER,
+            });
+
+            const response = await ownerData.agent.get(
+                `/api/v1/projects/${ownerData.project._id}/members?sortBy=role&order=asc`
+            );
+
+            expect(response.statusCode).toBe(200);
+
+            const { members } = response.body.data;
+            const roles = members.map((member) => member.role);
+
+            expect(roles).toEqual([...roles].sort());
+            expect(roles).toContain(UserRolesEnum.MEMBER);
+        } finally {
+            await cleanupTestData(ownerData);
+            await cleanupTestData(memberData);
+        }
+    }, 15000);
+
+    test("should reject unsupported project member sort fields", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const response = await testData.agent.get(
+                `/api/v1/projects/${testData.project._id}/members?sortBy=password&order=desc`
+            );
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe("Invalid sort field");
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should filter projects by user role", async () => {
+        const testData = await createTestSetup();
+        let createdProject;
+
+        try {
+            const existingMembership = await ProjectMember.findOne({
+                user: testData.user._id,
+                project: testData.project._id,
+            });
+
+            expect(existingMembership).not.toBeNull();
+
+            const targetRole = AvailableUserRole.find(
+                (role) => role !== existingMembership.role
+            );
+
+            expect(targetRole).toBeDefined();
+
+            createdProject = await Project.create({
+                name: `filter-role-${Date.now()}`,
+                description: "Role filtering test",
+                createdBy: testData.user._id,
+            });
+
+            await ProjectMember.create({
+                user: testData.user._id,
+                project: createdProject._id,
+                role: targetRole,
+            });
+
+            const response = await testData.agent.get(
+                `/api/v1/projects?role=${encodeURIComponent(targetRole)}`
+            );
+
+            expect(response.statusCode).toBe(200);
+
+            const { projects, pagination } = response.body.data;
+
+            expect(projects).toHaveLength(1);
+            expect(projects[0].project._id).toBe(
+                createdProject._id.toString()
+            );
+            expect(projects[0].role).toBe(targetRole);
+            expect(pagination.totalProjects).toBe(1);
+        } finally {
+            if (createdProject) {
+                await ProjectMember.deleteMany({
+                    project: createdProject._id,
+                });
+
+                await Project.deleteOne({
+                    _id: createdProject._id,
+                });
+            }
+
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should reject an invalid project role filter", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const response = await testData.agent.get(
+                "/api/v1/projects?role=INVALID_ROLE"
+            );
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe("Invalid project role");
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should filter project members by role", async () => {
+        const ownerData = await createTestSetup();
+        const memberData = await createTestAuthSetup();
+        let createdMembership;
+
+        try {
+            const existingMemberships = await ProjectMember.find({
+                project: ownerData.project._id,
+            }).select("role").lean();
+
+            const existingRoles = new Set(
+                existingMemberships.map((membership) => membership.role)
+            );
+
+            const targetRole = AvailableUserRole.find(
+                (role) => !existingRoles.has(role)
+            );
+
+            expect(targetRole).toBeDefined();
+
+            createdMembership = await ProjectMember.create({
+                user: memberData.user._id,
+                project: ownerData.project._id,
+                role: targetRole,
+            });
+
+            const response = await ownerData.agent.get(
+                `/api/v1/projects/${ownerData.project._id}/members?role=${encodeURIComponent(targetRole)}`
+            );
+
+            expect(response.statusCode).toBe(200);
+
+            const { members, pagination } = response.body.data;
+
+            expect(members).toHaveLength(1);
+            expect(members[0].role).toBe(targetRole);
+            expect(members[0].user._id).toBe(
+                memberData.user._id.toString()
+            );
+            expect(pagination.totalMembers).toBe(1);
+        } finally {
+            if (createdMembership) {
+                await ProjectMember.deleteOne({
+                    _id: createdMembership._id,
+                });
+            }
+
+            await cleanupTestData(ownerData);
+            await cleanupTestData(memberData);
+        }
+    }, 15000);
+
+    test("should reject an invalid project member role filter", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const response = await testData.agent.get(
+                `/api/v1/projects/${testData.project._id}/members?role=INVALID_ROLE`
+            );
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe(
+                "Invalid project member role"
+            );
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    it("should search projects by name and description", async () => {
+        const testData = await createTestSetup();
+        const suffix = `${process.pid}-${Date.now()}`;
+        const backendProjectName = `Backend Authentication API ${suffix}`;
+        const taskManagerName = `Task Manager ${suffix}`;
+        const portfolioName = `Portfolio Website ${suffix}`;
+
+        try {
+            await testData.agent
+                .post("/api/v1/projects")
+                .send({
+                    name: backendProjectName,
+                    description: "Handles user login",
+                })
+                .expect(201);
+
+            await testData.agent
+                .post("/api/v1/projects")
+                .send({
+                    name: taskManagerName,
+                    description: "Backend project tracking",
+                })
+                .expect(201);
+
+            await testData.agent
+                .post("/api/v1/projects")
+                .send({
+                    name: portfolioName,
+                    description: "Personal frontend showcase",
+                })
+                .expect(201);
+
+            const response = await testData.agent
+                .get("/api/v1/projects?search=backend")
+                .expect(200);
+
+            expect(response.body.success).toBe(true);
+
+            const { projects, pagination } = response.body.data;
+
+            expect(projects).toHaveLength(2);
+            expect(
+                projects.map((item) => item.project.name).sort(),
+            ).toEqual([
+                backendProjectName, taskManagerName].sort()
+            );
+            expect(pagination.totalProjects).toBe(2);
+            expect(pagination.totalPages).toBe(1);
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    it("should search project members by username", async () => {
+        const ownerData = await createTestSetup();
+        const searchUsername = `searchmember${Date.now()}`;
+
+        const memberData = await createTestAuthSetup({
+            userOverrides: {
+                username: searchUsername,
+            },
+        });
+
+        try {
+            await ProjectMember.create({
+                user: memberData.user._id,
+                project: ownerData.project._id,
+                role: UserRolesEnum.MEMBER,
+            });
+
+            const response = await ownerData.agent
+                .get(
+                    `/api/v1/projects/${ownerData.project._id}/members?search=${searchUsername}`,
+                )
+                .expect(200);
+
+            expect(response.body.success).toBe(true);
+
+            const { members, pagination } = response.body.data;
+
+            expect(members).toHaveLength(1);
+            expect(members[0].user.username).toBe(searchUsername);
+            expect(pagination.totalMembers).toBe(1);
+        } finally {
+            await cleanupTestData(ownerData);
+            await cleanupTestData(memberData);
+        }
+    }, 15000);
 })

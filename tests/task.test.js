@@ -10,7 +10,7 @@ import { SubTask } from "../src/models/subtask.models.js"
 import { ProjectMember } from "../src/models/projectmembers.models.js"
 import { User } from "../src/models/user.models.js"
 
-import { UserRolesEnum, TaskStatusEnum } from "../src/utils/constants.js"
+import { UserRolesEnum, TaskStatusEnum, AvailableTaskStatus } from "../src/utils/constants.js"
 
 import {
     createTestUser,
@@ -324,17 +324,39 @@ describe("Task API", () => {
             expect(response.statusCode).toBe(200)
             expect(response.body.success).toBe(true)
             expect(response.body.message).toBe(
-                "Task fetched successfully"
+                "Tasks fetched successfully"
             )
 
-            expect(response.body.data).toBeDefined()
-            expect(response.body.data.length).toBeGreaterThan(0)
+            expect(response.body.data).toBeDefined();
+
+            const { tasks, pagination } = response.body.data;
+
+            // Verify the returned tasks
+            expect(Array.isArray(tasks)).toBe(true);
+            expect(tasks.length).toBeGreaterThan(0);
 
             expect(
-                response.body.data.some(
-                    task => task.title === "Task For Fetch"
-                )
-            ).toBe(true)
+                tasks.some(task => task.title === "Task For Fetch")
+            ).toBe(true);
+
+            expect(pagination.currentPage).toBe(1);
+            expect(pagination.limit).toBe(10);
+            expect(pagination.totalTasks).toBeGreaterThanOrEqual(tasks.length);
+
+            expect(pagination.totalPages).toBe(
+                Math.ceil(pagination.totalTasks / pagination.limit)
+            );
+
+            expect(pagination.hasNextPage).toBe(
+                pagination.currentPage < pagination.totalPages
+            );
+
+            expect(pagination.nextPage).toBe(
+                pagination.hasNextPage ? pagination.currentPage + 1 : null
+            );
+
+            expect(pagination.hasPreviousPage).toBe(false);
+            expect(pagination.previousPage).toBe(null);
         } finally {
             await cleanupTestData(testData)
         }
@@ -2208,6 +2230,376 @@ describe("Task API", () => {
             await expect(
                 fs.access(filePath)
             ).rejects.toThrow()
+        } finally {
+            await cleanupTestData(testData)
+        }
+    }, 15000)
+
+    test("should paginate tasks and return correct navigation metadata", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const titles = [
+                "Pagination Task A",
+                "Pagination Task B",
+                "Pagination Task C",
+            ];
+
+
+            for (const title of titles) {
+                const createResponse = await testData.agent
+                    .post(`/api/v1/tasks/${testData.project._id}`)
+                    .send({
+                        title,
+                        description: "Pagination integration test",
+                    });
+
+                expect(createResponse.statusCode).toBe(201);
+            }
+
+
+            const firstResponse = await testData.agent
+                .get(`/api/v1/tasks/${testData.project._id}?page=1&limit=2`);
+
+            expect(firstResponse.statusCode).toBe(200);
+
+            const { tasks: firstTasks, pagination: firstPagination } =
+                firstResponse.body.data;
+
+            expect(firstTasks).toHaveLength(2);
+            expect(firstPagination).toMatchObject({
+                currentPage: 1,
+                limit: 2,
+                totalTasks: 3,
+                totalPages: 2,
+                hasNextPage: true,
+                nextPage: 2,
+                hasPreviousPage: false,
+                previousPage: null,
+            });
+
+
+            const secondResponse = await testData.agent
+                .get(`/api/v1/tasks/${testData.project._id}?page=2&limit=2`);
+
+            expect(secondResponse.statusCode).toBe(200);
+
+            const { tasks: secondTasks, pagination: secondPagination } =
+                secondResponse.body.data;
+
+            expect(secondTasks).toHaveLength(1);
+            expect(secondPagination).toMatchObject({
+                currentPage: 2,
+                limit: 2,
+                totalTasks: 3,
+                totalPages: 2,
+                hasNextPage: false,
+                nextPage: null,
+                hasPreviousPage: true,
+                previousPage: 1,
+            });
+
+
+            const returnedTitles = [...firstTasks, ...secondTasks]
+                .map(task => task.title)
+                .sort();
+
+            expect(returnedTitles).toEqual([...titles].sort());
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 30000);
+
+    test("should reject invalid pagination parameters", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const invalidQueies = [
+                "?page=abc",
+                "?page=0",
+                "?page=-1",
+                "?limit=101",
+                "?page=10002",
+                "?page=1&page=2"
+            ]
+
+            for (const query of invalidQueies) {
+                const response = await testData.agent.get(
+                    `/api/v1/tasks/${testData.project._id}${query}`
+                )
+
+                expect(response.statusCode).toBe(400)
+            }
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 30000)
+
+    test("should return empty tasks with correct pagination metadata", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const response = await testData.agent
+                .get(`/api/v1/tasks/${testData.project._id}`);
+
+            expect(response.statusCode).toBe(200);
+
+            const { tasks, pagination } = response.body.data;
+
+            expect(tasks).toEqual([]);
+
+            expect(pagination).toEqual({
+                currentPage: 1,
+                limit: 10,
+                totalTasks: 0,
+                totalPages: 0,
+                hasNextPage: false,
+                nextPage: null,
+                hasPreviousPage: false,
+                previousPage: null,
+            });
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should return empty tasks when requesting a page beyond the last page", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const createResponse = await testData.agent
+                .post(`/api/v1/tasks/${testData.project._id}`)
+                .send({
+                    title: "Only Task",
+                    description: "Test out-of-range pagination",
+                });
+
+            expect(createResponse.statusCode).toBe(201);
+
+            const response = await testData.agent
+                .get(
+                    `/api/v1/tasks/${testData.project._id}?page=2&limit=10`
+                );
+
+            expect(response.statusCode).toBe(200);
+
+            const { tasks, pagination } = response.body.data;
+
+            expect(tasks).toEqual([]);
+
+            expect(pagination).toEqual({
+                currentPage: 2,
+                limit: 10,
+                totalTasks: 1,
+                totalPages: 1,
+                hasNextPage: false,
+                nextPage: null,
+                hasPreviousPage: true,
+                previousPage: 1,
+            });
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should sort tasks by title in ascending order", async () => {
+        const testData = await createTestSetup();
+        let createdTasks = [];
+
+        try {
+            const prefix = `sort-${Date.now()}`;
+
+            const titles = [
+                `${prefix}-C`,
+                `${prefix}-A`,
+                `${prefix}-B`,
+            ];
+
+            createdTasks = await Task.create(
+                titles.map((title) => ({
+                    title,
+                    project: testData.project._id,
+                }))
+            );
+
+            const response = await testData.agent.get(
+                `/api/v1/tasks/${testData.project._id}?sortBy=title&order=asc&limit=100`
+            );
+
+            expect(response.statusCode).toBe(200);
+
+            const returnedTitles = response.body.data.tasks
+                .map((task) => task.title)
+                .filter((title) => titles.includes(title));
+
+            expect(returnedTitles).toEqual([
+                `${prefix}-A`,
+                `${prefix}-B`,
+                `${prefix}-C`,
+            ]);
+        } finally {
+            if (createdTasks.length > 0) {
+                await Task.deleteMany({
+                    _id: { $in: createdTasks.map((task) => task._id) },
+                });
+            }
+
+            await cleanupTestData(testData);
+        }
+    }, 15000);
+
+    test("should reject unsupported task sort fields", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const response = await testData.agent.get(
+                `/api/v1/tasks/${testData.project._id}?sortBy=password&order=desc`
+            );
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe("Invalid sort field");
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000)
+
+    test("should filter tasks by status and paginate filtered results", async () => {
+        const testData = await createTestSetup();
+        let createdTasks = [];
+
+        try {
+            const prefix = `filter-${Date.now()}`;
+            const otherStatus = AvailableTaskStatus.find(
+                (status) => status !== TaskStatusEnum.TODO
+            );
+
+            expect(otherStatus).toBeDefined();
+
+            createdTasks = await Task.create([
+                {
+                    title: `${prefix}-TODO-1`,
+                    project: testData.project._id,
+                    status: TaskStatusEnum.TODO,
+                },
+                {
+                    title: `${prefix}-TODO-2`,
+                    project: testData.project._id,
+                    status: TaskStatusEnum.TODO,
+                },
+                {
+                    title: `${prefix}-OTHER`,
+                    project: testData.project._id,
+                    status: otherStatus,
+                },
+            ]);
+
+            const response = await testData.agent.get(
+                `/api/v1/tasks/${testData.project._id}?status=${TaskStatusEnum.TODO}&page=1&limit=1`
+            );
+
+            expect(response.statusCode).toBe(200);
+
+            const { tasks, pagination } = response.body.data;
+
+            expect(tasks).toHaveLength(1);
+            expect(tasks[0].status).toBe(TaskStatusEnum.TODO);
+
+            expect(pagination.totalTasks).toBe(2);
+            expect(pagination.totalPages).toBe(2);
+            expect(pagination.hasNextPage).toBe(true);
+            expect(pagination.nextPage).toBe(2);
+        } finally {
+            if (createdTasks.length > 0) {
+                await Task.deleteMany({
+                    _id: {
+                        $in: createdTasks.map((task) => task._id),
+                    },
+                });
+            }
+
+            await cleanupTestData(testData);
+        }
+    }, 15000)
+
+    test("should reject an unsupported task status", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const response = await testData.agent.get(
+                `/api/v1/tasks/${testData.project._id}?status=INVALID_STATUS`
+            );
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe("Invalid task status");
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000)
+
+    test("should reject multiple task status values", async () => {
+        const testData = await createTestSetup();
+
+        try {
+            const response = await testData.agent.get(
+                `/api/v1/tasks/${testData.project._id}?status=TODO&status=DONE`
+            );
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe("Invalid task status");
+        } finally {
+            await cleanupTestData(testData);
+        }
+    }, 15000)
+
+    test("should search tasks by title and description", async () => {
+        const testData = await createTestSetup()
+
+        try {
+            const titleMatch = await testData.agent
+                .post(`/api/v1/tasks/${testData.project._id}`)
+                .send({
+                    title: "Authentication Implementation",
+                    description: "Build the login flow"
+                })
+
+            const descriptionMatch = await testData.agent
+                .post(`/api/v1/tasks/${testData.project._id}`)
+                .send({
+                    title: "Email Worker",
+                    description: "Send authentication verification emails"
+                })
+
+            const unrelatedTask = await testData.agent
+                .post(`/api/v1/tasks/${testData.project._id}`)
+                .send({
+                    title: "Database Indexing",
+                    description: "Improve query performance"
+                })
+
+            expect(titleMatch.statusCode).toBe(201)
+            expect(descriptionMatch.statusCode).toBe(201)
+            expect(unrelatedTask.statusCode).toBe(201)
+
+            const response = await testData.agent
+                .get(
+                    `/api/v1/tasks/${testData.project._id}?search=AUTHENTICATION`
+                )
+
+            expect(response.statusCode).toBe(200)
+            expect(response.body.success).toBe(true)
+
+            const tasks = response.body.data.tasks
+            const taskTitles = tasks.map(task => task.title)
+
+            expect(tasks).toHaveLength(2)
+            expect(taskTitles).toEqual(
+                expect.arrayContaining([
+                    "Authentication Implementation",
+                    "Email Worker"
+                ])
+            )
+
+            expect(taskTitles).not.toContain("Database Indexing")
         } finally {
             await cleanupTestData(testData)
         }

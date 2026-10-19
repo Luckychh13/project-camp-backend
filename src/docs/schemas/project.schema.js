@@ -41,12 +41,53 @@ export const projectSchemas = {
         message: "Project fetched successfully",
         success: true
     },
+    ProjectsPagination: {
+        $currentPage: 1,
+        $limit: 10,
+        $totalProjects: 8,
+        $totalPages: 1,
+        $hasNextPage: false,
+        $nextPage: {
+            type: "integer",
+            nullable: true,
+            example: null
+        },
+        $hasPreviousPage: false,
+        $previousPage: {
+            type: "integer",
+            nullable: true,
+            example: null
+        }
+    },
+    ProjectMembersPagination: {
+        $currentPage: 1,
+        $limit: 10,
+        $totalMembers: 18,
+        $totalPages: 2,
+        $hasNextPage: true,
+        $nextPage: {
+            type: "integer",
+            nullable: true,
+            example: 2
+        },
+        $hasPreviousPage: false,
+        $previousPage: {
+            type: "integer",
+            nullable: true,
+            example: null
+        }
+    },
     ProjectsResponse: {
         statusCode: 200,
         data: {
-            type: "array",
-            items: {
-                $ref: "#/components/schemas/ProjectListItem"
+            projects: {
+                type: "array",
+                items: {
+                    $ref: "#/components/schemas/ProjectListItem"
+                }
+            },
+            pagination: {
+                $ref: "#/components/schemas/ProjectsPagination"
             }
         },
         message: "Projects fetched successfully",
@@ -109,12 +150,17 @@ export const projectSchemas = {
     ProjectMembersResponse: {
         statusCode: 200,
         data: {
-            type: "array",
-            items: {
-                $ref: "#/components/schemas/ProjectMember"
+            members: {
+                type: "array",
+                items: {
+                    $ref: "#/components/schemas/ProjectMember"
+                }
+            },
+            pagination: {
+                $ref: "#/components/schemas/ProjectMembersPagination"
             }
         },
-        message: "Project members fetched",
+        message: "Project members fetched successfully",
         success: true
     },
     UpdateProjectMemberResponse: {

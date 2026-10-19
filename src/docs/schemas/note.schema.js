@@ -24,12 +24,36 @@ export const noteSchemas = {
         message: "Note fetched successfully",
         success: true
     },
+    NotePagination: {
+        $currentPage: 1,
+        $limit: 10,
+        $totalNotes: 15,
+        $totalPages: 2,
+        $hasNextPage: true,
+        $nextPage: {
+            type: "integer",
+            nullable: true,
+            example: 2
+        },
+        $hasPreviousPage: false,
+        $previousPage: {
+            type: "integer",
+            nullable: true,
+            example: null
+        }
+    },
+
     NotesResponse: {
         statusCode: 200,
         data: {
-            type: "array",
-            items: {
-                $ref: '#/components/schemas/Note'
+            notes: {
+                type: "array",
+                items: {
+                    $ref: "#/components/schemas/Note"
+                }
+            },
+            pagination: {
+                $ref: "#/components/schemas/NotePagination"
             }
         },
         message: "Notes fetched successfully",

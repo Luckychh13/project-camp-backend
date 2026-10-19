@@ -50,15 +50,39 @@ export const taskSchemas = {
         createdAt: "2026-10-04T10:00:00.000Z",
         updatedAt: "2026-10-04T10:00:00.000Z"
     },
+    TaskPagination: {
+        $currentPage: 1,
+        $limit: 10,
+        $totalTasks: 23,
+        $totalPages: 3,
+        $hasNextPage: true,
+        $nextPage: {
+            type: "integer",
+            nullable: true,
+            example: 2
+        },
+        $hasPreviousPage: true,
+        $previousPage: {
+            type: "integer",
+            nullable: true,
+            example: null
+        }
+    },
+
     TasksResponse: {
         statusCode: 200,
         data: {
-            type: "array",
-            items: {
-                $ref: "#/components/schemas/TaskListItem"
+            tasks: {
+                type: "array",
+                items: {
+                    $ref: "#/components/schemas/TaskListItem"
+                }
+            },
+            pagination: {
+                $ref: "#/components/schemas/TaskPagination"
             }
         },
-        message: "Task fetched successfully",
+        message: "Tasks fetched successfully",
         success: true
     },
     CreateTaskResponse: {
